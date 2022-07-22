@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Tuple, List
 from utils import Reward, ListReward, Recommendation, ListRecommendation
+from utils import covert_list_to_recommendation, covert_reward_to_list
 
 
 class Algorithm(ABC):
@@ -14,27 +15,38 @@ class Algorithm(ABC):
 
     @abstractmethod
     def compute_recommendation(self,
-                               rewards: Reward or List[Reward],
+                               reward: None or Reward or List[Reward],
                                time: int) -> Recommendation or ListRecommendation:
         return None
 
 
 class UtilityMatrix(Algorithm):
     def __init__(self,
+                 exploration_frequency: int,
                  n_agents: int):
         super().__init__(n_agents)
         self._best_reward_so_far = ListReward(np.empty(self._n_agents))
         self._best_recommendation_so_far = ListRecommendation(np.empty(self._n_agents))
         self._last_recommendation = ListRecommendation(np.empty(self._n_agents))
+        self.exploration_frequency = exploration_frequency
 
-    def get_best_recommendation_so_far(self, idx: np.ndarray) -> ListRecommendation:
-        return ListRecommendation(self._best_recommendation_so_far[idx].copy())
+    def get_best_recommendation_so_far(self, idx: np.ndarray = None) -> ListRecommendation:
+        if idx is None:
+            return ListRecommendation(self._best_recommendation_so_far)
+        else:
+            return ListRecommendation(self._best_recommendation_so_far[idx])
 
-    def get_best_reward_so_far(self, idx: np.ndarray) -> ListReward:
-        return ListReward(self._best_reward_so_far[idx].copy())
+    def get_best_reward_so_far(self, idx: np.ndarray = None) -> ListReward:
+        if idx is None:
+            return ListReward(self._best_reward_so_far)
+        else:
+            return ListReward(self._best_reward_so_far[idx])
 
-    def get_last_recommendation(self, idx: np.ndarray) -> ListRecommendation:
-        return ListRecommendation(self._last_recommendation[idx].copy())
+    def get_last_recommendation(self, idx: np.ndarray = None) -> ListRecommendation:
+        if idx is None:
+            return ListRecommendation(self._last_recommendation)
+        else:
+            return ListRecommendation(self._last_recommendation[idx])
 
     def set_best_so_far(self, idx: np.ndarray, new_recommendation: ListRecommendation, new_reward: ListReward) -> None:
         assert idx.size == new_recommendation.size, 'The size must coincide.'
@@ -42,32 +54,39 @@ class UtilityMatrix(Algorithm):
         self._best_recommendation_so_far[idx] = new_recommendation
         self._best_reward_so_far[idx] = new_reward
 
+    def explore(self, time: int) -> bool:
+        return time % self.exploration_frequency == 0
+
     def compute_recommendation(self,
-                               reward: Reward or ListReward,
-                               time: int) -> Recommendation or List[Recommendation]:
-        if time == 0:
+                               reward: None or Reward or ListReward,
+                               time: int) -> Recommendation or ListRecommendation:
+        if time == 0 or (reward is None and self.get_best_reward_so_far() is None):
             # initial time
             r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
-        elif time % 100 == 0:
+        elif self.get_best_reward_so_far().size == 0:
+            # if the best is empty, initialize it
+            self.set_best_so_far(idx=np.arange(0, self.n_agents()),
+                                 new_reward=ListReward(np.asarray([reward])),
+                                 new_recommendation=self.get_last_recommendation())
+            r = self.get_best_recommendation_so_far()
+        elif self.explore(time=time):
             # every 10 explore
             r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
         else:
             # no exploration
-            # check if reward are there
+            if self.n_agents() == 1:
+                reward = covert_reward_to_list(reward)
             # find agents for which things improved
-            if np.all(self.get_best_reward_so_far(idx=np.arange(self.n_agents())) >= reward):
-                r = self.get_best_recommendation_so_far(idx=np.arange(self.n_agents()))
+            if np.all(self.get_best_reward_so_far() >= reward):
+                r = self.get_best_recommendation_so_far()
             else:
-                idx_better = np.where(reward > self.get_best_reward_so_far(idx=np.arange(self.n_agents())))[0]
+                idx_better = np.where(reward > self.get_best_reward_so_far())[0]
                 # update best
                 if idx_better.size >= 1:
                     self.set_best_so_far(idx=idx_better,
                                          new_recommendation=self.get_last_recommendation(idx=idx_better),
                                          new_reward=reward[idx_better])
                 # recommend the best
-                r = self.get_best_recommendation_so_far(idx=np.arange(self.n_agents()))
+                r = self.get_best_recommendation_so_far()
         self._last_recommendation = r
-        if self.n_agents() == 1:
-            return Recommendation(r[0])
-        else:
-            return r
+        return covert_list_to_recommendation(r)
