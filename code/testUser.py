@@ -3,7 +3,7 @@ from algorithms import UtilityMatrix
 from agents import User
 from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
 from parameters import ParametersUser
-from Simulator import Simulator
+from simulator import Simulator
 from utils import Opinion
 
 # Parameters
@@ -22,6 +22,7 @@ user = User(initial_state=Opinion(0.0),
 
 # Define algorithm
 alg = UtilityMatrix(n_agents=1,
+                    exploration_probability=0.0,
                     exploration_frequency=100)
 
 # Simulation

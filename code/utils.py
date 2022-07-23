@@ -44,13 +44,14 @@ def covert_list_to_recommendation(x: ListRecommendation) -> ListRecommendation o
 
 
 # keys
+KEY_ITERATION = 'iteration'
 KEY_OPINION = 'opinion'
 KEY_STD_OPINION = 'std_opinion'
 KEY_AVERAGE_OPINION = 'average_opinion'
 KEY_REWARD = 'reward'
 KEY_AVERAGE_REWARD = 'average_reward'
 KEY_RECOMMENDATION = 'recommendation'
-KEY_AVERAGE_RECOMMENDATION = 'average_recommandation'
+KEY_AVERAGE_RECOMMENDATION = 'average_recommendation'
 
 # keys reward
 KEY_SQUARED_EXPONENTIAL_REWARD = 'squared_exponential'

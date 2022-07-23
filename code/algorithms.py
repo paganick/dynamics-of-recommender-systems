@@ -22,13 +22,15 @@ class Algorithm(ABC):
 
 class UtilityMatrix(Algorithm):
     def __init__(self,
-                 exploration_frequency: int,
-                 n_agents: int):
+                 n_agents: int,
+                 exploration_frequency: int or None = None,
+                 exploration_probability: float or None = None):
         super().__init__(n_agents)
         self._best_reward_so_far = ListReward(np.empty(self._n_agents))
         self._best_recommendation_so_far = ListRecommendation(np.empty(self._n_agents))
         self._last_recommendation = ListRecommendation(np.empty(self._n_agents))
         self.exploration_frequency = exploration_frequency
+        self.exploration_probability = exploration_probability
 
     def get_best_recommendation_so_far(self, idx: np.ndarray = None) -> ListRecommendation:
         if idx is None:
@@ -55,7 +57,12 @@ class UtilityMatrix(Algorithm):
         self._best_reward_so_far[idx] = new_reward
 
     def explore(self, time: int) -> bool:
-        return time % self.exploration_frequency == 0
+        explore = False
+        if self.exploration_frequency is not None:
+            explore = explore or time % self.exploration_frequency
+        if self.exploration_probability is not None:
+            explore = explore or float(np.random.rand(1)) <= self.exploration_probability
+        return explore
 
     def compute_recommendation(self,
                                reward: None or Reward or ListReward,

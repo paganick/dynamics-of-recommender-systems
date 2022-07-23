@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 from typing import Tuple, List, Dict, Callable
 from utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
 from utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
-from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
+from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION, KEY_ITERATION
 from parameters import ParametersUser, ParametersPopulation
+from trajectory import Trajectory
 
 
 class OpinionDynamicsEntity(ABC):
     def __init__(self,
                  save_history: bool) -> None:
         self.save_history = save_history
-        self._trajectory = {}
 
     @abstractmethod
     def initialize(self, initial_state) -> None:
@@ -26,15 +26,6 @@ class OpinionDynamicsEntity(ABC):
     def plot(self, save: bool = False, name: str = 'sim') -> None:
         return
 
-    def get_trajectory(self, key: str) -> ListOpinion or ListReward or ListRecommendation or None:
-        if key in self._trajectory:
-            if key == KEY_OPINION or key == KEY_AVERAGE_OPINION or key == KEY_STD_OPINION:
-                return np.asarray(self._trajectory[key])[:-1]  # cut the last entry since the state has one extra
-            else:
-                return np.asarray(self._trajectory[key])
-        else:
-            return None
-
 
 class User(OpinionDynamicsEntity):
     def __init__(self,
@@ -44,7 +35,7 @@ class User(OpinionDynamicsEntity):
         super().__init__(save_history=save_history)
         self._parameters = parameters
         self._x = None
-        self._trajectory = {KEY_OPINION: [], KEY_REWARD: [], KEY_RECOMMENDATION: []}
+        self.trajectory = Trajectory([KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION])
         self.initialize(initial_state)
 
     def get_parameters(self) -> ParametersUser:
@@ -53,9 +44,7 @@ class User(OpinionDynamicsEntity):
     def initialize(self, initial_state: Opinion) -> None:
         self._x = initial_state
         if self.save_history:
-            self._trajectory[KEY_OPINION] = [initial_state]
-            self._trajectory[KEY_REWARD] = []
-            self._trajectory[KEY_RECOMMENDATION] = []
+            self.trajectory.append(KEY_OPINION, initial_state)
 
     def get_opinion(self) -> Opinion:
         return self._x
@@ -69,25 +58,16 @@ class User(OpinionDynamicsEntity):
         x_new = self.get_parameters().weight_prejudice*self.get_parameters().prejudice + self.get_parameters().weight_current_opinion*self.get_opinion() + self.get_parameters().weight_recommendation*recommendation
         self._x = Opinion(x_new)
         if self.save_history:
-            self._trajectory[KEY_OPINION].append(x_new)
-            self._trajectory[KEY_REWARD].append(reward)
-            self._trajectory[KEY_RECOMMENDATION].append(recommendation)
+            self.trajectory.append(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION],
+                                   items=[x_new, reward, recommendation])
         return reward
 
     def plot(self, save: bool = False, name: str = 'sim') -> None:
-        if not self.save_history or self.get_trajectory(key=KEY_RECOMMENDATION) is None:
+        if not self.save_history:
             return
-        f, (ax1, ax2, ax3) = plt.subplots(3, 1)
-        horizon = len(self.get_trajectory(key=KEY_RECOMMENDATION))
-        ax1.plot(np.arange(horizon), self.get_trajectory(key=KEY_OPINION))
-        ax1.set_ylabel('Opinion')
-        ax2.plot(np.arange(horizon), self.get_trajectory(key=KEY_RECOMMENDATION))
-        ax2.set_ylabel('Recommendation')
-        ax3.plot(np.arange(horizon), self.get_trajectory(key=KEY_REWARD))
-        ax3.set_ylabel('Reward')
-        plt.show()
-        if save:
-            plt.savefig(name + '.png')
+        self.trajectory.plot(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION],
+                             save=save,
+                             save_name=name)
 
 
 class Population(OpinionDynamicsEntity):
@@ -103,8 +83,8 @@ class Population(OpinionDynamicsEntity):
             self.add_user(User(initial_state=Opinion(initial_state[i]),
                                parameters=parameters.get_parameters_user(idx_user=i),
                                save_history=False))
-        self._trajectory = {KEY_AVERAGE_OPINION: [], KEY_STD_OPINION: [],
-                            KEY_AVERAGE_REWARD: [], KEY_AVERAGE_RECOMMENDATION: []}
+        self.trajectory = Trajectory([KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD, KEY_AVERAGE_OPINION,
+                                      KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION])
         self.initialize(initial_state)
         # TODO: build parameter vectors
 
@@ -122,10 +102,8 @@ class Population(OpinionDynamicsEntity):
             u.initialize(initial_state=Opinion(initial_state[count]))
         self._x = self.get_opinion_vector()
         if self.save_history:
-            self._trajectory[KEY_AVERAGE_OPINION] = [self.average_opinion()]
-            self._trajectory[KEY_STD_OPINION] = [self.std_opinion()]
-            self._trajectory[KEY_AVERAGE_REWARD] = []
-            self._trajectory[KEY_AVERAGE_RECOMMENDATION] = []
+            self.trajectory.append(keys=[KEY_OPINION, KEY_AVERAGE_OPINION, KEY_STD_OPINION],
+                                   items=[self.get_opinion_vector(), self.average_opinion(), self.std_opinion()])
 
     def update_state(self, recommendation: ListRecommendation) -> ListReward:
         # TODO: this function is quite inefficient, it could be done with matrices (but it is not so elegant anymore)
@@ -135,10 +113,10 @@ class Population(OpinionDynamicsEntity):
         reward = ListReward(np.asarray(reward))
         self._x = self.get_opinion_vector()
         if self.save_history:
-            self._trajectory[KEY_AVERAGE_OPINION].append(self.average_opinion())
-            self._trajectory[KEY_STD_OPINION].append(self.std_opinion())
-            self._trajectory[KEY_AVERAGE_REWARD].append(np.mean(reward))
-            self._trajectory[KEY_AVERAGE_RECOMMENDATION].append(np.mean(recommendation))
+            self.trajectory.append(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION, KEY_AVERAGE_OPINION,
+                                         KEY_STD_OPINION, KEY_AVERAGE_REWARD,KEY_AVERAGE_RECOMMENDATION],
+                                   items=[self.get_opinion_vector(), reward, recommendation, self.average_opinion(),
+                                          self.std_opinion(), np.mean(reward), np.mean(recommendation)])
         return reward
 
     def get_opinion_vector(self) -> ListOpinion:
@@ -154,7 +132,7 @@ class Population(OpinionDynamicsEntity):
         return np.sqrt(self.variance_opinion())
 
     def plot(self, save: bool = False, name: str = 'sim') -> None:
-        if not self.save_history or self.get_trajectory(key=KEY_AVERAGE_RECOMMENDATION) is None:
+        if not self.save_history:
             return
         """
         if self.n_agents() <= 2:
@@ -162,17 +140,15 @@ class Population(OpinionDynamicsEntity):
                 u.plot(save=save,
                        name='name_' + 'user' + str(i) + '_')
         """
-        f, (ax1, ax2, ax3) = plt.subplots(3, 1)
-        horizon = len(self.get_trajectory(key=KEY_AVERAGE_RECOMMENDATION))
-        ax1.plot(np.arange(horizon), self.get_trajectory(key=KEY_AVERAGE_OPINION))
-        ax1.set_ylabel('Average Opinion')
-        ax2.plot(np.arange(horizon), self.get_trajectory(key=KEY_AVERAGE_RECOMMENDATION))
-        ax2.set_ylabel('Average Recommendation')
-        ax3.plot(np.arange(horizon), self.get_trajectory(key=KEY_AVERAGE_REWARD))
-        ax3.set_ylabel('Average Reward')
+        self.trajectory.plot(keys=[KEY_AVERAGE_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
+                             save=save,
+                             save_name=name)
+        # TODO: implement plot Jules
+        plt.scatter(self.trajectory.get_item(key=KEY_OPINION)[0], self.trajectory.get_item(key=KEY_OPINION)[1],
+                    c='blue', s=5)
         plt.show()
         if save:
-            plt.savefig(name + '.png')
+            plt.savefig(name + '_opinions.png')
 
 
 class PopulationIdentical(Population):
