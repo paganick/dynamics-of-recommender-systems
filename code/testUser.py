@@ -1,4 +1,3 @@
-import numpy as np
 from algorithms import UtilityMatrix
 from agents import User
 from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential

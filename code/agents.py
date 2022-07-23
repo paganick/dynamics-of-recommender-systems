@@ -1,10 +1,10 @@
 import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
-from typing import Tuple, List, Dict, Callable
+from typing import List
 from utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
 from utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
-from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION, KEY_ITERATION
+from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
 from parameters import ParametersUser, ParametersPopulation
 from trajectory import Trajectory
 
@@ -55,7 +55,9 @@ class User(OpinionDynamicsEntity):
 
     def update_state(self, recommendation: Recommendation) -> Reward:
         reward = self.get_reward(recommendation)
-        x_new = self.get_parameters().weight_prejudice*self.get_parameters().prejudice + self.get_parameters().weight_current_opinion*self.get_opinion() + self.get_parameters().weight_recommendation*recommendation
+        x_new = self.get_parameters().weight_prejudice*self.get_parameters().prejudice \
+                + self.get_parameters().weight_current_opinion*self.get_opinion() \
+                + self.get_parameters().weight_recommendation*recommendation
         self._x = Opinion(x_new)
         if self.save_history:
             self.trajectory.append(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION],
@@ -86,7 +88,6 @@ class Population(OpinionDynamicsEntity):
         self.trajectory = Trajectory([KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD, KEY_AVERAGE_OPINION,
                                       KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION])
         self.initialize(initial_state)
-        # TODO: build parameter vectors
 
     def n_agents(self) -> int:
         return self._n_agents
@@ -114,7 +115,7 @@ class Population(OpinionDynamicsEntity):
         self._x = self.get_opinion_vector()
         if self.save_history:
             self.trajectory.append(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION, KEY_AVERAGE_OPINION,
-                                         KEY_STD_OPINION, KEY_AVERAGE_REWARD,KEY_AVERAGE_RECOMMENDATION],
+                                         KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
                                    items=[self.get_opinion_vector(), reward, recommendation, self.average_opinion(),
                                           self.std_opinion(), np.mean(reward), np.mean(recommendation)])
         return reward

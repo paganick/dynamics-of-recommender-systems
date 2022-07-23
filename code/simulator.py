@@ -1,8 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
 from agents import OpinionDynamicsEntity
 from algorithms import Algorithm
-from utils import ListReward, ListRecommendation
 
 
 class Simulator(ABC):

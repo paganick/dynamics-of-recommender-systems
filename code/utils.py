@@ -53,6 +53,11 @@ KEY_AVERAGE_REWARD = 'average_reward'
 KEY_RECOMMENDATION = 'recommendation'
 KEY_AVERAGE_RECOMMENDATION = 'average_recommendation'
 
+# key input output
+KEY_N_AGENTS = 'n_agents'
+KEY_USER = 'user'
+KEY_PARAMETERS_USERS = 'parameter_users'
+
 # keys reward
 KEY_SQUARED_EXPONENTIAL_REWARD = 'squared_exponential'
 KEY_EXPONENTIAL_REWARD = 'exponential'
