@@ -1,5 +1,6 @@
 from typing import NewType
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # types
 Opinion = NewType('Opinion', float)
@@ -9,34 +10,50 @@ ListReward = NewType('ListReward', np.ndarray)
 Recommendation = NewType('Recommendation', float)
 ListRecommendation = NewType('ListRecommendation', np.ndarray)
 
+def add_hist(ax, x, y, c='blue', legend=''):
+        divider = make_axes_locatable(ax)
+        axHistx = divider.append_axes("top", 1, pad=0.15, sharex=ax)
+        axHisty = divider.append_axes("right", 1, pad=0.2, sharey=ax)
+        # make some labels invisible
+        axHistx.xaxis.set_tick_params(labelbottom=False)
+        axHisty.yaxis.set_tick_params(labelleft=False)
+        # now determine nice limits by hand:
+        binwidth = 0.1
+        xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
+        lim = (int(xymax/binwidth) + 1)*binwidth
 
-def covert_opinion_to_list(x: Opinion) -> ListOpinion:
+        bins = np.arange(-lim, lim + binwidth, binwidth)
+        axHistx.hist(x, density=True, bins=bins, color=c)
+        # axHistx.set_title(legend)
+        axHisty.hist(y, density=True, bins=bins, orientation='horizontal', color=c)
+
+def convert_opinion_to_list(x: Opinion) -> ListOpinion:
     return ListOpinion(np.asarray([x]))
 
 
-def covert_list_to_opinion(x: ListOpinion) -> ListOpinion or Opinion:
+def convert_list_to_opinion(x: ListOpinion) -> ListOpinion or Opinion:
     if x.size == 1:
         return Opinion(x[0])
     else:
         return x
 
 
-def covert_reward_to_list(x: Reward) -> ListReward:
+def convert_reward_to_list(x: Reward) -> ListReward:
     return ListReward(np.asarray([x]))
 
 
-def covert_list_to_reward(x: ListReward) -> ListReward or Reward:
+def convert_list_to_reward(x: ListReward) -> ListReward or Reward:
     if x.size == 1:
         return Reward(x[0])
     else:
         return x
 
 
-def covert_recommendation_to_list(x: ListRecommendation) -> ListRecommendation:
+def convert_recommendation_to_list(x: ListRecommendation) -> ListRecommendation:
     return ListRecommendation(np.asarray([x]))
 
 
-def covert_list_to_recommendation(x: ListRecommendation) -> ListRecommendation or Recommendation:
+def convert_list_to_recommendation(x: ListRecommendation) -> ListRecommendation or Recommendation:
     if x.size == 1:
         return Recommendation(x[0])
     else:

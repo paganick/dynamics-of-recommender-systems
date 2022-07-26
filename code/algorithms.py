@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Tuple, List
 from utils import Reward, ListReward, Recommendation, ListRecommendation
-from utils import covert_list_to_recommendation, covert_reward_to_list
+from utils import convert_list_to_recommendation, convert_reward_to_list
 
 
 class Algorithm(ABC):
@@ -26,7 +26,7 @@ class UtilityMatrix(Algorithm):
                  exploration_frequency: int or None = None,
                  exploration_probability: float or None = None):
         super().__init__(n_agents)
-        self._best_reward_so_far = ListReward(np.empty(self._n_agents))
+        self._best_reward_so_far = ListReward(np.zeros(self._n_agents))
         self._best_recommendation_so_far = ListRecommendation(np.empty(self._n_agents))
         self._last_recommendation = ListRecommendation(np.empty(self._n_agents))
         self.exploration_frequency = exploration_frequency
@@ -59,10 +59,10 @@ class UtilityMatrix(Algorithm):
     def explore(self, time: int) -> bool:
         explore = False
         if self.exploration_frequency is not None:
-            explore = explore or time % self.exploration_frequency
+            explore = explore or (time % self.exploration_frequency == 0)
         if self.exploration_probability is not None:
-            explore = explore or float(np.random.rand(1)) <= self.exploration_probability
-        return explore
+            explore = explore or float(np.random.rand(1)) <= self.exploration_probability #TO BE CHECKED
+        return bool(explore)
 
     def compute_recommendation(self,
                                reward: None or Reward or ListReward,
@@ -77,12 +77,11 @@ class UtilityMatrix(Algorithm):
                                  new_recommendation=self.get_last_recommendation())
             r = self.get_best_recommendation_so_far()
         elif self.explore(time=time):
-            # every 10 explore
             r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
         else:
             # no exploration
             if self.n_agents() == 1:
-                reward = covert_reward_to_list(reward)
+                reward = convert_reward_to_list(reward)
             # find agents for which things improved
             if np.all(self.get_best_reward_so_far() >= reward):
                 r = self.get_best_recommendation_so_far()
@@ -96,4 +95,4 @@ class UtilityMatrix(Algorithm):
                 # recommend the best
                 r = self.get_best_recommendation_so_far()
         self._last_recommendation = r
-        return covert_list_to_recommendation(r)
+        return convert_list_to_recommendation(r)

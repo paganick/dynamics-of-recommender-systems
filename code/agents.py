@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 from typing import List
+from utils import add_hist
 from utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
 from utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
 from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
@@ -141,16 +142,28 @@ class Population(OpinionDynamicsEntity):
                 u.plot(save=save,
                        name='name_' + 'user' + str(i) + '_')
         """
-        self.trajectory.plot(keys=[KEY_AVERAGE_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
+        self.trajectory.plot(keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
                              save=save,
                              save_name=name)
         # TODO: implement plot Jules
-        plt.scatter(self.trajectory.get_item(key=KEY_OPINION)[0], self.trajectory.get_item(key=KEY_OPINION)[1],
-                    c='blue', s=5)
+#         plt.scatter(self.trajectory.get_item(key=KEY_OPINION)[0], self.trajectory.get_item(key=KEY_OPINION)[1],
+#                     c='blue', s=5)
+        fig1, ax1 = plt.subplots(nrows=1, ncols=1)
+        ax1.scatter(self.trajectory.get_item(key=KEY_OPINION)[0], self.trajectory.get_item(key=KEY_OPINION)[-1], 1)
+        plt.xlabel('Initial Opinion')
+        plt.ylabel('Final Opinion')
+        
+        ax1.plot([0, 1], [0, 1], 'r--', transform=ax1.transAxes, )
+        add_hist(ax1, self.trajectory.get_item(key=KEY_OPINION)[0], self.trajectory.get_item(key=KEY_OPINION)[-1])
         plt.show()
         if save:
             plt.savefig(name + '_opinions.png')
 
+        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[0], density=True, alpha=0.7, label='Initial Opinion')
+        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[-1], density=True, alpha=0.7, label='Final Opinion')
+        plt.legend()
+        plt.show()
+        
 
 class PopulationIdentical(Population):
     def __init__(self,
