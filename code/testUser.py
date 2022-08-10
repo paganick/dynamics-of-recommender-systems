@@ -1,12 +1,14 @@
 from algorithms import UtilityMatrix
 from agents import User
 from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from samplersRecommendation import UniformSamplerRecommendation
 from parameters import ParametersUser
 from simulator import Simulator
 from utils import Opinion
 
 # Parameters
 reward = RewardFunctionSquaredExponential(decay_parameter=1.0)
+recommendation_sampler = UniformSamplerRecommendation(low=-1.0, high=1.0)
 
 parameters = ParametersUser(prejudice=Opinion(0.0),
                             weight_prejudice=0.2,
@@ -21,6 +23,7 @@ user = User(initial_state=Opinion(0.0),
 
 # Define algorithm
 alg = UtilityMatrix(n_agents=1,
+                    recommendation_sampler=recommendation_sampler,
                     exploration_probability=0.0,
                     exploration_frequency=100)
 

@@ -10,6 +10,7 @@ ListReward = NewType('ListReward', np.ndarray)
 Recommendation = NewType('Recommendation', float)
 ListRecommendation = NewType('ListRecommendation', np.ndarray)
 
+
 def add_hist(ax, x, y, c='blue', legend=''):
         divider = make_axes_locatable(ax)
         axHistx = divider.append_axes("top", 1, pad=0.15, sharex=ax)
@@ -26,6 +27,7 @@ def add_hist(ax, x, y, c='blue', legend=''):
         axHistx.hist(x, density=True, bins=bins, color=c)
         # axHistx.set_title(legend)
         axHisty.hist(y, density=True, bins=bins, orientation='horizontal', color=c)
+
 
 def convert_opinion_to_list(x: Opinion) -> ListOpinion:
     return ListOpinion(np.asarray([x]))
@@ -80,3 +82,8 @@ KEY_SQUARED_EXPONENTIAL_REWARD = 'squared_exponential'
 KEY_EXPONENTIAL_REWARD = 'exponential'
 KEY_REWARD_TYPE = 'type'
 KEY_REWARD_DECAY_PARAMETER = 'decay_parameter'
+
+# keys recommendation sampler
+KEY_SAMPLER_RECOMMENDATION_TYPE = 'type'
+KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW = 'low'
+KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH = 'high'

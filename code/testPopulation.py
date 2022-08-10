@@ -2,6 +2,7 @@ import numpy as np
 from algorithms import UtilityMatrix
 from agents import Population
 from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from samplersRecommendation import UniformSamplerRecommendation
 from parameters import ParametersUser, ParametersPopulation
 from utils import Opinion, ListOpinion
 from simulator import Simulator
@@ -9,6 +10,7 @@ from simulator import Simulator
 # Parameters
 reward_1 = RewardFunctionSquaredExponential(decay_parameter=1.0)
 reward_2 = RewardFunctionExponential(decay_parameter=2.0)
+recommendation_sampler = UniformSamplerRecommendation(low=-1.0, high=1.0)
 
 parameters_1 = ParametersUser(prejudice=Opinion(0.0),
                               weight_prejudice=0.0,
@@ -35,9 +37,11 @@ population_non_identical = Population(initial_state=ListOpinion(0.5*np.ones(2)),
 
 # Define algorithm
 alg_identical = UtilityMatrix(n_agents=population_identical.n_agents(),
+                              recommendation_sampler=recommendation_sampler,
                               exploration_probability=0.0,
                               exploration_frequency=10)
 alg_non_identical = UtilityMatrix(n_agents=population_non_identical.n_agents(),
+                                  recommendation_sampler=recommendation_sampler,
                                   exploration_probability=0.0,
                                   exploration_frequency=10)
 
