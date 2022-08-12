@@ -1,10 +1,10 @@
-from algorithms import UtilityMatrix
-from agents import User
-from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
-from samplersRecommendation import UniformSamplerRecommendation
-from parameters import ParametersUser
-from simulator import Simulator
-from utils import Opinion
+from modules.algorithms import UtilityMatrix
+from modules.agents import User
+from modules.rewards import RewardFunctionSquaredExponential
+from modules.samplersRecommendation import UniformSamplerRecommendation
+from modules.parameters import ParametersUser
+from modules.simulator import Simulator
+from modules.utils import Opinion
 
 # Parameters
 reward = RewardFunctionSquaredExponential(decay_parameter=1.0)

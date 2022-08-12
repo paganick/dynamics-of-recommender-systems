@@ -1,12 +1,19 @@
 import numpy as np
-from abc import ABC, abstractmethod
-from utils import ListRecommendation, Recommendation, convert_list_to_recommendation
-from utils import KEY_SAMPLER_RECOMMENDATION_TYPE, KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW, KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH
+from abc import ABC
+from modules.utils import ListRecommendation, Recommendation
+from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE, KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW, KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH
 
 
 class SamplerRecommendation(ABC):
     def __init__(self) -> None:
         pass
+
+    @staticmethod #TODO: implement this correctly
+    def set_seed(seed: int):
+        if isinstance(seed, int):
+            np.random.seed(seed)
+        else:
+            raise ValueError('Unknown seed, please input an integer.')
 
     def sample(self,
                number: int) -> ListRecommendation or Recommendation:

@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from utils import Reward, KEY_SQUARED_EXPONENTIAL_REWARD, KEY_EXPONENTIAL_REWARD, KEY_REWARD_TYPE, KEY_REWARD_DECAY_PARAMETER
+from modules.utils import Reward, KEY_SQUARED_EXPONENTIAL_REWARD, KEY_EXPONENTIAL_REWARD, KEY_REWARD_TYPE, KEY_REWARD_DECAY_PARAMETER
 
 
 class RewardFunction(ABC):

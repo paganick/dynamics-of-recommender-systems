@@ -1,11 +1,11 @@
 import numpy as np
-from algorithms import UtilityMatrix
-from agents import Population
-from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
-from samplersRecommendation import UniformSamplerRecommendation
-from parameters import ParametersUser, ParametersPopulation
-from utils import Opinion, ListOpinion
-from simulator import Simulator
+from modules.algorithms import UtilityMatrix
+from modules.agents import Population
+from modules.rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from modules.samplersRecommendation import UniformSamplerRecommendation
+from modules.parameters import ParametersUser, ParametersPopulation
+from modules.utils import Opinion, ListOpinion
+from modules.simulator import Simulator
 
 # Parameters
 reward_1 = RewardFunctionSquaredExponential(decay_parameter=1.0)
