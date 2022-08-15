@@ -72,29 +72,16 @@ class UtilityMatrix(Algorithm):
                                time: int) -> Recommendation or ListRecommendation:
         if time == 0:
             # initial time
-<<<<<<< HEAD:code/algorithms.py
-            #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
-            r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
-        elif self.get_best_reward_so_far().size == 0:
-            # if the best is empty, initialize it
-=======
-            r = self.recommendation_sampler.sample(number=self.n_agents())
-        elif self.explore(time=time):  # this now explores for all agents in parallel, to update
-            # exploration
             r = self.recommendation_sampler.sample(number=self.n_agents())
         elif np.any(np.isnan(self.get_best_reward_so_far())):
             # if the best is empty (i.e., nan for at least one user), initialize it
->>>>>>> c5dfa4a5409145093384a2c8d5f9acfb23e93c36:code/modules/algorithms.py
             self.set_best_so_far(idx=np.arange(0, self.n_agents()),
                                  new_reward=ListReward(np.asarray([reward])),
                                  new_recommendation=self.get_last_recommendation())
             r = self.get_best_recommendation_so_far()
-<<<<<<< HEAD:code/algorithms.py
-        elif self.explore(time=time):
-            #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
-            r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
-=======
->>>>>>> c5dfa4a5409145093384a2c8d5f9acfb23e93c36:code/modules/algorithms.py
+        elif self.explore(time=time):  # this now explores for all agents in parallel, to update
+            # exploration
+            r = self.recommendation_sampler.sample(number=self.n_agents())
         else:
             # no exploration
             if self.n_agents() == 1:
