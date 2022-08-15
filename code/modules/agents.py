@@ -133,7 +133,7 @@ class Population(OpinionDynamicsEntity):
     def std_opinion(self) -> Opinion:
         return np.sqrt(self.variance_opinion())
 
-    def plot(self, save: bool = False, name: str = 'sim') -> None:
+    def plot(self, save: bool = False, name: str = 'sim', intermediate = 100) -> None:
         if not self.save_history:
             return
         """
@@ -159,8 +159,9 @@ class Population(OpinionDynamicsEntity):
         if save:
             plt.savefig(name + '_opinions.png')
 
-        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[0], density=True, alpha=0.7, label='Initial Opinion')
-        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[-1], density=True, alpha=0.7, label='Final Opinion')
+        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[0],   density=True, alpha=0.7, label='Initial Opinion')
+        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[intermediate], density=True, alpha=0.7, label='Intermediate Opinion')
+        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[-1],  density=True, alpha=0.7, label='Final Opinion')
         plt.legend()
         plt.show()
         
