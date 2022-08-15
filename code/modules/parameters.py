@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import List
-from utils import Opinion, KEY_PARAMETERS_USERS, KEY_N_AGENTS, KEY_USER
-from rewards import RewardFunction, load_reward_function
+from modules.utils import Opinion, KEY_PARAMETERS_USERS, KEY_N_AGENTS, KEY_USER
+from modules.rewards import RewardFunction, load_reward_function
 
 
 class Parameters(ABC):

@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
-from agents import OpinionDynamicsEntity
-from algorithms import Algorithm
+from abc import ABC
+from modules.agents import OpinionDynamicsEntity
+from modules.algorithms import Algorithm
 
 
 class Simulator(ABC):

@@ -2,12 +2,12 @@ import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 from typing import List
-from utils import add_hist
-from utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
-from utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
-from utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
-from parameters import ParametersUser, ParametersPopulation
-from trajectory import Trajectory
+from modules.utils import add_hist
+from modules.utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
+from modules.utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
+from modules.utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
+from modules.parameters import ParametersUser, ParametersPopulation
+from modules.trajectory import Trajectory
 
 
 class OpinionDynamicsEntity(ABC):

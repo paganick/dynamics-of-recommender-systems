@@ -1,14 +1,16 @@
 import numpy as np
-from algorithms import UtilityMatrix
-from agents import Population
-from rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
-from parameters import ParametersUser, ParametersPopulation
-from utils import Opinion, ListOpinion
-from simulator import Simulator
+from modules.algorithms import UtilityMatrix
+from modules.agents import Population
+from modules.rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from modules.samplersRecommendation import UniformSamplerRecommendation
+from modules.parameters import ParametersUser, ParametersPopulation
+from modules.utils import Opinion, ListOpinion
+from modules.simulator import Simulator
 
 # Parameters
 reward_1 = RewardFunctionSquaredExponential(decay_parameter=1.0)
 reward_2 = RewardFunctionExponential(decay_parameter=2.0)
+recommendation_sampler = UniformSamplerRecommendation(low=-1.0, high=1.0)
 
 parameters_1 = ParametersUser(prejudice=Opinion(0.0),
                               weight_prejudice=0.0,
@@ -22,11 +24,11 @@ parameters_2 = ParametersUser(prejudice=Opinion(0.0),
                               reward=reward_2)
 
 parameters_population_identical = ParametersPopulation(parameters=parameters_1,
-                                                       repeat=8)
+                                                       repeat=1000)
 parameters_population_non_identical = ParametersPopulation(parameters=[parameters_1, parameters_2])
 
 # Define population
-population_identical = Population(initial_state=ListOpinion(np.random.uniform(low=-1.0, high=1.0, size=8)),
+population_identical = Population(initial_state=ListOpinion(np.random.uniform(low=-1.0, high=1.0, size=1000)),
                                   parameters=parameters_population_identical,
                                   save_history=True)
 population_non_identical = Population(initial_state=ListOpinion(0.5*np.ones(2)),
@@ -35,10 +37,12 @@ population_non_identical = Population(initial_state=ListOpinion(0.5*np.ones(2)),
 
 # Define algorithm
 alg_identical = UtilityMatrix(n_agents=population_identical.n_agents(),
-                              exploration_probability=None,
+                              recommendation_sampler=recommendation_sampler,
+                              exploration_probability=0.0,
                               exploration_frequency=10)
 alg_non_identical = UtilityMatrix(n_agents=population_non_identical.n_agents(),
-                                  exploration_probability=None,
+                                  recommendation_sampler=recommendation_sampler,
+                                  exploration_probability=0.0,
                                   exploration_frequency=10)
 
 # Simulators

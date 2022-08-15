@@ -1,8 +1,9 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Tuple, List
-from utils import Reward, ListReward, Recommendation, ListRecommendation
-from utils import convert_list_to_recommendation, convert_reward_to_list
+from typing import List
+from modules.utils import Reward, ListReward, Recommendation, ListRecommendation
+from modules.utils import convert_list_to_recommendation, convert_reward_to_list
+from modules.samplersRecommendation import SamplerRecommendation
 
 
 class Algorithm(ABC):
@@ -23,14 +24,16 @@ class Algorithm(ABC):
 class UtilityMatrix(Algorithm):
     def __init__(self,
                  n_agents: int,
+                 recommendation_sampler: SamplerRecommendation,
                  exploration_frequency: int or None = None,
                  exploration_probability: float or None = None):
         super().__init__(n_agents)
-        self._best_reward_so_far = ListReward(np.zeros(self._n_agents))
-        self._best_recommendation_so_far = ListRecommendation(np.empty(self._n_agents))
-        self._last_recommendation = ListRecommendation(np.empty(self._n_agents))
+        self._best_reward_so_far = ListReward(np.nan*np.ones(self.n_agents()))  # TODO: use nan, not zero or empty
+        self._best_recommendation_so_far = ListRecommendation(np.nan*np.ones(self.n_agents()))
+        self._last_recommendation = ListRecommendation(np.nan*np.ones(self.n_agents()))
         self.exploration_frequency = exploration_frequency
         self.exploration_probability = exploration_probability
+        self.recommendation_sampler = recommendation_sampler
 
     def get_best_recommendation_so_far(self, idx: np.ndarray = None) -> ListRecommendation:
         if idx is None:
@@ -61,34 +64,46 @@ class UtilityMatrix(Algorithm):
         if self.exploration_frequency is not None:
             explore = explore or (time % self.exploration_frequency == 0)
         if self.exploration_probability is not None:
-            explore = explore or float(np.random.rand(1)) <= self.exploration_probability #TO BE CHECKED
+            explore = explore or float(np.random.rand(1)) <= self.exploration_probability  # TO BE CHECKED
         return bool(explore)
 
     def compute_recommendation(self,
                                reward: None or Reward or ListReward,
                                time: int) -> Recommendation or ListRecommendation:
-        if time == 0 or (reward is None and self.get_best_reward_so_far() is None):
+        if time == 0:
             # initial time
+<<<<<<< HEAD:code/algorithms.py
             #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
             r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
         elif self.get_best_reward_so_far().size == 0:
             # if the best is empty, initialize it
+=======
+            r = self.recommendation_sampler.sample(number=self.n_agents())
+        elif self.explore(time=time):  # this now explores for all agents in parallel, to update
+            # exploration
+            r = self.recommendation_sampler.sample(number=self.n_agents())
+        elif np.any(np.isnan(self.get_best_reward_so_far())):
+            # if the best is empty (i.e., nan for at least one user), initialize it
+>>>>>>> c5dfa4a5409145093384a2c8d5f9acfb23e93c36:code/modules/algorithms.py
             self.set_best_so_far(idx=np.arange(0, self.n_agents()),
                                  new_reward=ListReward(np.asarray([reward])),
                                  new_recommendation=self.get_last_recommendation())
             r = self.get_best_recommendation_so_far()
+<<<<<<< HEAD:code/algorithms.py
         elif self.explore(time=time):
             #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
             r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
+=======
+>>>>>>> c5dfa4a5409145093384a2c8d5f9acfb23e93c36:code/modules/algorithms.py
         else:
             # no exploration
             if self.n_agents() == 1:
                 reward = convert_reward_to_list(reward)
             # find agents for which things improved
-            if np.all(self.get_best_reward_so_far() >= reward):
+            if np.all(self.get_best_reward_so_far() >= reward):  # no agents have improved
                 r = self.get_best_recommendation_so_far()
             else:
-                idx_better = np.where(reward > self.get_best_reward_so_far())[0]
+                idx_better = np.where(reward > self.get_best_reward_so_far())[0] # index of the agents which improved
                 # update best
                 if idx_better.size >= 1:
                     self.set_best_so_far(idx=idx_better,
@@ -96,5 +111,5 @@ class UtilityMatrix(Algorithm):
                                          new_reward=reward[idx_better])
                 # recommend the best
                 r = self.get_best_recommendation_so_far()
-        self._last_recommendation = r
+        self._last_recommendation = r  # finally, update the last recommendation
         return convert_list_to_recommendation(r)
