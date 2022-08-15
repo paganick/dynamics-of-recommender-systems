@@ -28,7 +28,7 @@ class UtilityMatrix(Algorithm):
                  exploration_frequency: int or None = None,
                  exploration_probability: float or None = None):
         super().__init__(n_agents)
-        self._best_reward_so_far = ListReward(np.nan*np.ones(self.n_agents()))  # TODO: use nan, not zero or empty
+        self._best_reward_so_far = ListReward(np.nan*np.ones(self.n_agents()))
         self._best_recommendation_so_far = ListRecommendation(np.nan*np.ones(self.n_agents()))
         self._last_recommendation = ListRecommendation(np.nan*np.ones(self.n_agents()))
         self.exploration_frequency = exploration_frequency

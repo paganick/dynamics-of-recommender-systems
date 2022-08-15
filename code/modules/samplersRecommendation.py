@@ -1,19 +1,18 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from modules.utils import ListRecommendation, Recommendation
-from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE, KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW, KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH
+from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE
+from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE_UNIFORM, KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW, KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH
+from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE_GAUSSIAN, KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_MEAN, KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_STD
 
 
 class SamplerRecommendation(ABC):
     def __init__(self) -> None:
         pass
 
-    @staticmethod #TODO: implement this correctly
+    @staticmethod  # TODO: implement this correctly
     def set_seed(seed: int):
-        if isinstance(seed, int):
-            np.random.seed(seed)
-        else:
-            raise ValueError('Unknown seed, please input an integer.')
+        raise ValueError('This is not implemented yet.')
 
     @abstractmethod
     def sample(self,
@@ -52,7 +51,7 @@ class UniformSamplerRecommendation(SamplerRecommendation):
                                                     size=number))
 
     def save(self) -> dict:
-        return {KEY_SAMPLER_RECOMMENDATION_TYPE: 'uniform',
+        return {KEY_SAMPLER_RECOMMENDATION_TYPE: KEY_SAMPLER_RECOMMENDATION_TYPE_UNIFORM,
                 KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW: self._low,
                 KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH: self._high}
 
@@ -64,3 +63,43 @@ class UniformSamplerRecommendation(SamplerRecommendation):
 
     def get_standard_deviation(self) -> float:
         return np.sqrt(self.get_variance())
+
+
+class GaussianSamplerRecommendation(SamplerRecommendation):
+    def __init__(self,
+                 mean: float,
+                 std: float) -> None:
+        super().__init__()
+        self._mean = mean
+        self._std = std
+
+    def sample(self,
+               number: int) -> ListRecommendation:
+        return ListRecommendation(self._mean + self._std*np.random.randn(number))
+
+    def save(self) -> dict:
+        return {KEY_SAMPLER_RECOMMENDATION_TYPE: KEY_SAMPLER_RECOMMENDATION_TYPE_GAUSSIAN,
+                KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_MEAN: self._mean,
+                KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_STD: self._std}
+
+    def get_expected_value(self) -> float:
+        return self._mean
+
+    def get_variance(self) -> float:
+        return self.get_standard_deviation()**2
+
+    def get_standard_deviation(self) -> float:
+        return self._std
+
+
+def load_import_recommendation_sampler(parameters:dict) -> SamplerRecommendation:
+    if not isinstance(parameters, dict) or KEY_SAMPLER_RECOMMENDATION_TYPE not in parameters:
+        raise ValueError('Unknown input type.')
+    if parameters['KEY_SAMPLER_RECOMMENDATION_TYPE'] ==  KEY_SAMPLER_RECOMMENDATION_TYPE_UNIFORM:
+        return UniformSamplerRecommendation(low=parameters[KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW],
+                                            high=parameters[KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH])
+    elif parameters['KEY_SAMPLER_RECOMMENDATION_TYPE'] ==  KEY_SAMPLER_RECOMMENDATION_TYPE_GAUSSIAN:
+        return GaussianSamplerRecommendation(mean=parameters[KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_MEAN],
+                                             std=parameters[KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_STD])
+    else:
+        raise ValueError('Unknown distribution.')
