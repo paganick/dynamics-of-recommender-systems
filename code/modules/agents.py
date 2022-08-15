@@ -133,6 +133,12 @@ class Population(OpinionDynamicsEntity):
     def std_opinion(self) -> Opinion:
         return np.sqrt(self.variance_opinion())
 
+    def __add__(self, other):  # TODO: define sum
+        raise ValueError('Not implemented yet.')
+
+    def __eq__(self, other): # TODO: implement
+        raise ValueError('Not implemented yet.')
+
     def plot(self, save: bool = False, name: str = 'sim', intermediate = 100) -> None:
         if not self.save_history:
             return

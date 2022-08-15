@@ -1,5 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
+import matplotlib.pyplot as plt
 from modules.utils import ListRecommendation, Recommendation
 from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE
 from modules.utils import KEY_SAMPLER_RECOMMENDATION_TYPE_UNIFORM, KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW, KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH
@@ -34,6 +35,10 @@ class SamplerRecommendation(ABC):
     @abstractmethod
     def get_standard_deviation(self) -> float:
         pass
+
+    def plot(self) -> None:  # TODO: improve
+        samples = self.sample(number=1000)
+        plt.hist(samples)
 
 
 class UniformSamplerRecommendation(SamplerRecommendation):
@@ -89,6 +94,34 @@ class GaussianSamplerRecommendation(SamplerRecommendation):
         return self.get_standard_deviation()**2
 
     def get_standard_deviation(self) -> float:
+        return self._std
+
+
+class BimodalSamplerRecommendation(SamplerRecommendation):
+    def __init__(self,
+                 mean: list,
+                 std: list) -> None:
+        super().__init__()
+        self._mean = np.asarray(mean)
+        self._std = np.asarray(std)
+
+    def sample(self,
+               number: int) -> ListRecommendation:
+        which = np.random.rand(number) <= 0.5
+        r1 = ListRecommendation(self._mean[0] + self._std[0]*np.random.randn(number))
+        r2 = ListRecommendation(self._mean[1] + self._std[1]*np.random.randn(number))
+        return r1*which + r2*(1.0-which)
+
+    def save(self) -> dict:
+        raise ValueError('Not implemented.')
+
+    def get_expected_value(self) -> np.ndarray:
+        return self._mean
+
+    def get_variance(self) -> np.ndarray:
+        return self.get_standard_deviation()**2
+
+    def get_standard_deviation(self) -> np.ndarray:
         return self._std
 
 

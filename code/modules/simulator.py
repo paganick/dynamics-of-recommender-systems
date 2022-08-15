@@ -18,5 +18,8 @@ class Simulator(ABC):
                                                       time=t)
             reward = self.agent.update_state(recommendation=r)
 
+    def metrics(self) -> None: # TODO: metrics
+        pass
+
     def save(self) -> dict:  # TODO
         pass
