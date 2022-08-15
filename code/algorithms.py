@@ -69,7 +69,8 @@ class UtilityMatrix(Algorithm):
                                time: int) -> Recommendation or ListRecommendation:
         if time == 0 or (reward is None and self.get_best_reward_so_far() is None):
             # initial time
-            r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
+            #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
+            r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
         elif self.get_best_reward_so_far().size == 0:
             # if the best is empty, initialize it
             self.set_best_so_far(idx=np.arange(0, self.n_agents()),
@@ -77,7 +78,8 @@ class UtilityMatrix(Algorithm):
                                  new_recommendation=self.get_last_recommendation())
             r = self.get_best_recommendation_so_far()
         elif self.explore(time=time):
-            r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
+            #r = np.random.uniform(low=-1.0, high=1.0, size=self.n_agents())
+            r = np.random.normal(loc=0.0, scale=1.0, size=self.n_agents())
         else:
             # no exploration
             if self.n_agents() == 1:
