@@ -22,11 +22,11 @@ parameters_2 = ParametersUser(prejudice=Opinion(0.0),
                               reward=reward_2)
 
 parameters_population_identical = ParametersPopulation(parameters=parameters_1,
-                                                       repeat=1000)
+                                                       repeat=8)
 parameters_population_non_identical = ParametersPopulation(parameters=[parameters_1, parameters_2])
 
 # Define population
-population_identical = Population(initial_state=ListOpinion(np.random.uniform(low=-1.0, high=1.0, size=1000)),
+population_identical = Population(initial_state=ListOpinion(np.random.uniform(low=-1.0, high=1.0, size=8)),
                                   parameters=parameters_population_identical,
                                   save_history=True)
 population_non_identical = Population(initial_state=ListOpinion(0.5*np.ones(2)),
@@ -35,10 +35,10 @@ population_non_identical = Population(initial_state=ListOpinion(0.5*np.ones(2)),
 
 # Define algorithm
 alg_identical = UtilityMatrix(n_agents=population_identical.n_agents(),
-                              exploration_probability=0.0,
+                              exploration_probability=None,
                               exploration_frequency=10)
 alg_non_identical = UtilityMatrix(n_agents=population_non_identical.n_agents(),
-                                  exploration_probability=0.0,
+                                  exploration_probability=None,
                                   exploration_frequency=10)
 
 # Simulators
