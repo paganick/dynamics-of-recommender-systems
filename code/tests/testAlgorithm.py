@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from modules.algorithms import UtilityMatrix
-from modules.samplersRecommendation import UniformSamplerRecommendation
+from modules.samplers import UniformSamplerRecommendation
 from modules.utils import ListReward
 
 

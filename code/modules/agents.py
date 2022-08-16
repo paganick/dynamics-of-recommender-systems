@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 from typing import List
-from modules.utils import add_hist
+from modules.plotUtils import add_hist
 from modules.utils import Opinion, ListOpinion, Reward, ListReward, Recommendation, ListRecommendation
 from modules.utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
 from modules.utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
@@ -26,6 +26,10 @@ class OpinionDynamicsEntity(ABC):
     @abstractmethod
     def plot(self, save: bool = False, name: str = 'sim') -> None:
         return
+
+    @abstractmethod
+    def __eq__(self, other) -> bool:
+        pass
 
 
 class User(OpinionDynamicsEntity):
@@ -65,6 +69,9 @@ class User(OpinionDynamicsEntity):
                                    items=[x_new, reward, recommendation])
         return reward
 
+    def __eq__(self, other) -> bool:
+        return self.get_parameters() == other.get_parameters()
+
     def plot(self, save: bool = False, name: str = 'sim') -> None:
         if not self.save_history:
             return
@@ -79,7 +86,7 @@ class Population(OpinionDynamicsEntity):
                  parameters: ParametersPopulation,
                  save_history: bool) -> None:
         super().__init__(save_history=save_history)
-        self._n_agents = parameters.n_agents
+        self._n_agents = parameters.n_agents()
         self._users = []
         self._x = []
         for i in range(self.n_agents()):
@@ -95,6 +102,9 @@ class Population(OpinionDynamicsEntity):
 
     def users(self) -> List[User]:
         return self._users
+
+    def get_parameters_users(self) -> List[ParametersUser]:
+        return [u.get_parameters() for u in self.users()]
 
     def add_user(self, user: User) -> None:
         self._users.append(user)
@@ -133,11 +143,26 @@ class Population(OpinionDynamicsEntity):
     def std_opinion(self) -> Opinion:
         return np.sqrt(self.variance_opinion())
 
-    def __add__(self, other):  # TODO: define sum
-        raise ValueError('Not implemented yet.')
+    def __add__(self, other):
+        if isinstance(other, Population):
+            p = ParametersPopulation(self.get_parameters_users() + other.get_parameters_users())
+            x = ListOpinion(np.concatenate((self.get_opinion_vector(), other.get_opinion_vector())))
+            return Population(initial_state=x,
+                              parameters=p,
+                              save_history=self.save_history or other.save_history)
+        else:
+            raise ValueError("You can only sum two populations.")
 
-    def __eq__(self, other): # TODO: implement
-        raise ValueError('Not implemented yet.')
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Population):
+            if self.n_agents() != other.n_agents():
+                return False
+            for i, u in enumerate(self.users()):
+                if u != other.users()[i]:
+                    return False
+            return True
+        else:
+            raise ValueError("You can only compare two populations.")
 
     def plot(self, save: bool = False, name: str = 'sim', intermediate = 100) -> None:
         if not self.save_history:

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from modules.utils import Reward, ListReward, Recommendation, ListRecommendation
 from modules.utils import convert_list_to_recommendation, convert_reward_to_list
-from modules.samplersRecommendation import SamplerRecommendation
+from modules.samplers import SamplerRecommendation
 
 
 class Algorithm(ABC):

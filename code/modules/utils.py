@@ -1,6 +1,5 @@
 from typing import NewType
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # types
 Opinion = NewType('Opinion', float)
@@ -9,24 +8,6 @@ Reward = NewType('Reward', float)
 ListReward = NewType('ListReward', np.ndarray)
 Recommendation = NewType('Recommendation', float)
 ListRecommendation = NewType('ListRecommendation', np.ndarray)
-
-
-def add_hist(ax, x, y, c='blue', legend=''):
-        divider = make_axes_locatable(ax)
-        axHistx = divider.append_axes("top", 1, pad=0.15, sharex=ax)
-        axHisty = divider.append_axes("right", 1, pad=0.2, sharey=ax)
-        # make some labels invisible
-        axHistx.xaxis.set_tick_params(labelbottom=False)
-        axHisty.yaxis.set_tick_params(labelleft=False)
-        # now determine nice limits by hand:
-        binwidth = 0.1
-        xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
-        lim = (int(xymax/binwidth) + 1)*binwidth
-
-        bins = np.arange(-lim, lim + binwidth, binwidth)
-        axHistx.hist(x, density=True, bins=bins, color=c)
-        # axHistx.set_title(legend)
-        axHisty.hist(y, density=True, bins=bins, orientation='horizontal', color=c)
 
 
 def convert_opinion_to_list(x: Opinion) -> ListOpinion:
@@ -84,10 +65,16 @@ KEY_REWARD_TYPE = 'type'
 KEY_REWARD_DECAY_PARAMETER = 'decay_parameter'
 
 # keys recommendation sampler
-KEY_SAMPLER_RECOMMENDATION_TYPE = 'type'
-KEY_SAMPLER_RECOMMENDATION_TYPE_UNIFORM = 'uniform'
-KEY_SAMPLER_RECOMMENDATION_TYPE_GAUSSIAN = 'gaussian'
-KEY_SAMPLER_RECOMMENDATION_UNIFORM_LOW = 'low'
-KEY_SAMPLER_RECOMMENDATION_UNIFORM_HIGH = 'high'
-KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_MEAN = 'mean'
-KEY_SAMPLER_RECOMMENDATION_GAUSSIAN_STD = 'std'
+KEY_SAMPLER_TYPE = 'type'
+KEY_SAMPLER_OBJECT = 'object'
+KEY_SAMPLER_OBJECT_RECOMMENDATION = 'recommendation'
+KEY_SAMPLER_OBJECT_OPINION = 'opinion'
+KEY_SAMPLER_TYPE_UNIFORM = 'uniform'
+KEY_SAMPLER_TYPE_GAUSSIAN = 'gaussian'
+KEY_SAMPLER_TYPE_MIXTURE_GAUSSIAN = 'mixture of gaussian'
+KEY_SAMPLER_UNIFORM_LOW = 'low'
+KEY_SAMPLER_UNIFORM_HIGH = 'high'
+KEY_SAMPLER_GAUSSIAN_MEAN = 'mean'
+KEY_SAMPLER_GAUSSIAN_STD = 'std'
+KEY_SAMPLER_MIXTURE_GAUSSIAN_MEAN = 'mean'
+KEY_SAMPLER_MIXTURE_GAUSSIAN_STD = 'std'

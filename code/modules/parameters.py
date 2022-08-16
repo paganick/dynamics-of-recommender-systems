@@ -75,15 +75,18 @@ class ParametersPopulation(Parameters):
         super().__init__()
         if isinstance(parameters, list):
             self.identical = False
-            self.n_agents = len(parameters)
+            self._n_agents = len(parameters)
             if repeat is not None and repeat != 1:
                 raise ValueError('Currently not supported, repeat only works if one parameters is he input.')
         elif isinstance(parameters, ParametersUser):
             self.identical = True
-            self.n_agents = repeat
+            self._n_agents = repeat
         else:
             raise ValueError('Unknown input type.')
         self.parameters = parameters
+
+    def n_agents(self) -> int:
+        return self._n_agents
 
     def get_parameters_user(self, idx_user: int) -> ParametersUser:
         if self.identical:
@@ -93,7 +96,7 @@ class ParametersPopulation(Parameters):
 
     def save(self) -> dict:
         if self.identical:
-            out = {KEY_N_AGENTS: self.n_agents,
+            out = {KEY_N_AGENTS: self.n_agents(),
                    KEY_PARAMETERS_USERS: self.parameters}
         else:
             out = {}
@@ -102,12 +105,12 @@ class ParametersPopulation(Parameters):
         return out
 
     def __eq__(self, other) -> bool:
-        if self.n_agents != other.n_agents:
+        if self.n_agents() != other.n_agents():
             return False
         if self.identical and other.identical:
             return self.get_parameters_user(0) == other.get_parameters_user(0)
         else:
-            for i in range(self.n_agents):
+            for i in range(self.n_agents()):
                 if self.get_parameters_user(i) != other.get_parameters_user(i):
                     return False
             return True

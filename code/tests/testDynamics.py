@@ -3,7 +3,7 @@ import numpy as np
 from modules.parameters import ParametersUser, ParametersPopulation
 from modules.agents import User, Population
 from modules.utils import Opinion, ListOpinion, convert_list_to_recommendation
-from modules.samplersRecommendation import UniformSamplerRecommendation
+from modules.samplers import UniformSamplerRecommendation
 from modules.rewards import RewardFunctionSquaredExponential
 
 
