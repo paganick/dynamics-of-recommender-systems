@@ -14,6 +14,7 @@ class OpinionDynamicsEntity(ABC):
     def __init__(self,
                  save_history: bool) -> None:
         self.save_history = save_history
+        self.trajectory = None
 
     @abstractmethod
     def initialize(self, initial_state) -> None:

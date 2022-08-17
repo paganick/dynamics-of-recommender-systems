@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from abc import ABC
 from typing import List
+from modules.saveUtils import save_dict_to_file
 
 
 class Trajectory(ABC):
@@ -64,8 +65,8 @@ class Trajectory(ABC):
         if save:
             plt.savefig(save_name + '.png')
 
-    def save(self) -> dict:  # TODO
-        return {}
+    def trajectory(self) -> dict:
+        return self._trajectory
 
-    def save_to_file(self) -> None:  # TODO
-        return None
+    def save_to_file(self, name: str, folder: str or None = None) -> None:
+        save_dict_to_file(data=self.trajectory(), name=name, folder=folder)

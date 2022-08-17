@@ -39,7 +39,7 @@ class Sampler(ABC):  # TODO: distinguish abstract sampler, basic sampler, and mi
     def support(self) -> tuple:
         return self.distribution().support()
 
-    def plot(self, show: bool = True) -> None:  # TODO: improve
+    def plot(self, show: bool = True) -> None:
         samples = self.sample(number=10000)
         plt.hist(x=samples, bins=50)
         if show:

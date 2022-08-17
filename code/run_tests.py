@@ -4,5 +4,6 @@ from tests.testInputOutput import TestInputOutput
 from tests.testAlgorithm import TestAlgorithms
 from tests.testUser import TestUser
 from tests.testPopulation import TestPopulation
+from tests.testSaveLoad import TestSaveLoad
 
 unittest.main(verbosity=2)
