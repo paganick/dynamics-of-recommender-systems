@@ -3,7 +3,7 @@ import scipy
 from abc import ABC, abstractmethod
 from typing import List
 import matplotlib.pyplot as plt
-from modules.utils import ListRecommendation, ListOpinion
+from modules.basic import Opinion, Recommendation
 from modules.utils import KEY_SAMPLER_TYPE, KEY_SAMPLER_OBJECT
 from modules.utils import KEY_SAMPLER_OBJECT_RECOMMENDATION, KEY_SAMPLER_OBJECT_OPINION
 from modules.utils import KEY_SAMPLER_TYPE_UNIFORM, KEY_SAMPLER_UNIFORM_LOW, KEY_SAMPLER_UNIFORM_HIGH
@@ -52,15 +52,15 @@ class SamplerRecommendation(Sampler):
 
     def sample(self,
                number: int,
-               seed: int or None = None) -> ListRecommendation:
-        return ListRecommendation(super().sample(number=number, seed=seed))
+               seed: int or None = None) -> Recommendation:
+        return Recommendation(super().sample(number=number, seed=seed))
 
     def save(self) -> dict:
         out = super().save()
         out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
         return out
 
-    def plot(self) -> None:
+    def plot(self, show: bool = True) -> None:
         super().plot(show=False)
         plt.xlabel('Recommendation')
         plt.show()
@@ -72,15 +72,15 @@ class SamplerOpinion(Sampler):
 
     def sample(self,
                number: int,
-               seed: int or None = None) -> ListOpinion:
-        return ListOpinion(super().sample(number=number, seed=seed))
+               seed: int or None = None) -> Opinion:
+        return Opinion(super().sample(number=number, seed=seed))
 
     def save(self) -> dict:
         out = super().save()
         out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
         return out
 
-    def plot(self) -> None:
+    def plot(self, show: bool = True) -> None:
         super().plot(show=False)
         plt.xlabel('Opinion')
         plt.show()

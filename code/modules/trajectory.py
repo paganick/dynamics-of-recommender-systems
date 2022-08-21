@@ -48,22 +48,30 @@ class Trajectory(ABC):
 
     def plot(self,
              keys: str or List[str],
+             axis: plt.axes or None = None,
+             color: str = 'blue',
+             show: bool = True,
              t_start: int = 0,
              t_end: int = -1,
              save: bool = False,
              save_name: str = 'sim') -> None:
         if isinstance(keys, str):
             keys = [keys]
-        f, ax = plt.subplots(len(keys), 1)
+        if axis is None:  # TODO: fix this
+            _, axis = plt.subplots(len(keys), 1)
+        else:
+            if len(axis) != len(keys):
+                raise ValueError('The number of keys should coincide with the number of subplots.')
         x = np.arange(t_start, t_end)
         for i, k in enumerate(keys):
             if t_end == -1:
                 x = np.arange(t_start, self.get_number_entries_item(key=k))
-            ax[i].plot(x, self.get_item(key=k), c='blue')
-            ax[i].set_ylabel(k)
-        plt.show()
+            axis[i].plot(x, self.get_item(key=k), c=color)
+            axis[i].set_ylabel(k)
+        if show:
+            axis.show()
         if save:
-            plt.savefig(save_name + '.png')
+            axis.savefig(save_name + '.png')
 
     def trajectory(self) -> dict:
         return self._trajectory

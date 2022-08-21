@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
-from modules.rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from modules.rewardsFunctions import RewardFunctionExponential, RewardFunctionSquaredExponential
 from modules.parameters import ParametersUser, ParametersPopulation, load_parameters_user, load_parameters_population
-from modules.utils import Opinion
+from modules.basic import Opinion
 
 
 class TestInputOutput(unittest.TestCase):

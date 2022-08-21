@@ -1,2 +1,2 @@
-__all__ = ['agents', 'algorithms', 'parameters', 'rewards', 'samplers', 'simulator', 'trajectory', 'utils', 'plotUtils',
-           'saveUtils']
+__all__ = ['basic', 'agents', 'algorithms', 'parameters', 'rewardsFunctions', 'samplers', 'simulator',
+           'trajectory', 'utils', 'plotUtils', 'saveUtils']

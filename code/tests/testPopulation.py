@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 from modules.parameters import ParametersUser
-from modules.rewards import RewardFunctionSquaredExponential
-from modules.utils import Opinion
+from modules.rewardsFunctions import RewardFunctionSquaredExponential
+from modules.basic import Opinion
 from modules.agents import User
 
 

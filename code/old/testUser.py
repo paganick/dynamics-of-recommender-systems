@@ -1,6 +1,6 @@
 from modules.algorithms import UtilityMatrix
 from modules.agents import User
-from modules.rewards import RewardFunctionSquaredExponential
+from modules.rewardsFunctions import RewardFunctionSquaredExponential
 from modules.samplers import UniformSamplerRecommendation
 from modules.parameters import ParametersUser
 from modules.simulator import Simulator

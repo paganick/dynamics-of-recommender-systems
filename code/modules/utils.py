@@ -1,7 +1,7 @@
 from typing import NewType
 import numpy as np
 
-# types
+""""
 Opinion = NewType('Opinion', float)
 ListOpinion = NewType('ListOpinion', np.ndarray)
 Reward = NewType('Reward', float)
@@ -41,7 +41,7 @@ def convert_list_to_recommendation(x: ListRecommendation) -> ListRecommendation 
         return Recommendation(x[0])
     else:
         return x
-
+"""
 
 # keys
 KEY_ITERATION = 'iteration'

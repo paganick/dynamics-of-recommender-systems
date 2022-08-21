@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from modules.algorithms import UtilityMatrix
 from modules.samplers import UniformSamplerRecommendation
-from modules.utils import ListReward
+from modules.basic import Reward
 
 
 class TestAlgorithms(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestAlgorithms(unittest.TestCase):
             last_recommendation = None
             for t in range(horizon):
                 # generate random reward
-                rewards = ListReward(np.random.rand(n))
+                rewards = Reward(np.random.rand(n))
                 # fix seed
                 seed = int(np.random.randint(1, 100, 1))
                 # implementation

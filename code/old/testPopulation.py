@@ -1,7 +1,7 @@
 import numpy as np
 from modules.algorithms import UtilityMatrix
 from modules.agents import Population
-from modules.rewards import RewardFunctionExponential, RewardFunctionSquaredExponential
+from modules.rewardsFunctions import RewardFunctionExponential, RewardFunctionSquaredExponential
 from modules.samplers import UniformSamplerRecommendation
 from modules.parameters import ParametersUser, ParametersPopulation
 from modules.utils import Opinion, ListOpinion

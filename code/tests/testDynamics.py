@@ -2,9 +2,9 @@ import unittest
 import numpy as np
 from modules.parameters import ParametersUser, ParametersPopulation
 from modules.agents import User, Population
-from modules.utils import Opinion, ListOpinion, convert_list_to_recommendation
+from modules.basic import Opinion
 from modules.samplers import UniformSamplerRecommendation
-from modules.rewards import RewardFunctionSquaredExponential
+from modules.rewardsFunctions import RewardFunctionSquaredExponential
 
 
 class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input and parameters)
@@ -13,8 +13,8 @@ class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input 
             # random parameters
             reward = RewardFunctionSquaredExponential(decay_parameter=float(np.random.rand(1)))
             sampler = UniformSamplerRecommendation(low=-float(np.random.rand(1)), high=float(np.random.rand(1)))
-            prejudice = 2*float(np.random.rand(1)-0.5)
-            initial_state = 2*float(np.random.rand(1)-0.5)
+            prejudice = 2*(np.random.rand(1)-0.5)
+            initial_state = 2*(np.random.rand(1)-0.5)
             weight_prejudice = float(np.random.rand(1))
             weight_current_opinion = float(np.random.rand(1))
             weight_recommendation = float(np.random.rand(1))
@@ -29,17 +29,17 @@ class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input 
                                         weight_current_opinion=weight_current_opinion,
                                         reward=reward)
             # Define user
-            user = User(initial_state=Opinion(initial_state),
-                        parameters=parameters,
+            user = User(parameters=parameters,
+                        initial_state=Opinion(initial_state),
                         save_history=False)
 
             # define recommendation
             x = initial_state
             for t in range(100):
-                r = convert_list_to_recommendation(sampler.sample(1))
+                r = sampler.sample(1)
                 user.update_state(r)
                 x = weight_prejudice*prejudice + weight_recommendation*float(r) + weight_current_opinion*x
-                self.assertAlmostEqual(user.get_opinion(), x, 8, 'Incorrect update for a user.')
+                self.assertAlmostEqual(float(user.opinion()), float(x), 8, 'Incorrect update for a user.')
 
     def testIdenticalPopulation(self):
         n = 100
@@ -47,7 +47,7 @@ class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input 
             # random parameters
             reward = RewardFunctionSquaredExponential(decay_parameter=float(np.random.rand(1)))
             sampler = UniformSamplerRecommendation(low=-float(np.random.rand(1)), high=float(np.random.rand(1)))
-            prejudice = 2*float(np.random.rand(1)-0.5)
+            prejudice = 2*(np.random.rand(1)-0.5)
             initial_state = 2*(np.random.rand(n)-0.5)
             weight_prejudice = float(np.random.rand(1))
             weight_current_opinion = float(np.random.rand(1))
@@ -66,8 +66,8 @@ class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input 
                                                                    repeat=n)
 
             # Define user
-            population_identical = Population(initial_state=ListOpinion(initial_state),
-                                              parameters=parameters_population_identical,
+            population_identical = Population(parameters=parameters_population_identical,
+                                              initial_state=Opinion(initial_state),
                                               save_history=False)
 
             # define recommendation
@@ -76,9 +76,13 @@ class TestDynamics(unittest.TestCase):  # Test user dynamics (with random input 
                 r = sampler.sample(number=n)
                 population_identical.update_state(r)
                 x = weight_prejudice*prejudice + weight_recommendation*r + weight_current_opinion*x
-                error = np.max(np.abs(population_identical.get_opinion_vector() - x))
-                self.assertAlmostEqual(error, 0, 8, 'Incorrect update for a user.')
+                error = np.max(np.abs(population_identical.opinions() - x))
+                self.assertAlmostEqual(error, 0, 8, 'Incorrect update for a user at time ' + str(t) + '.')
 
-        def testNonIdenticalPopulation(self): #TODO: implement this
+        def testInitialization(self):  # TODO: implement this
+            for _ in range(10):
+                pass
+
+        def testNonIdenticalPopulation(self): # TODO: implement this
             for _ in range(10):
                 pass
