@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from abc import ABC
 from typing import List
-from modules.saveUtils import save_dict_to_file
+from modules.saveUtils import save_dict_to_file, save_figure
 
 
 class Trajectory(ABC):
@@ -54,10 +55,11 @@ class Trajectory(ABC):
              t_start: int = 0,
              t_end: int = -1,
              save: bool = False,
-             save_name: str = 'sim') -> None:
+             folder: str = None,
+             name: str = None) -> None:
         if isinstance(keys, str):
             keys = [keys]
-        if axis is None:  # TODO: fix this
+        if axis is None:
             _, axis = plt.subplots(len(keys), 1)
         else:
             if len(axis) != len(keys):
@@ -68,10 +70,12 @@ class Trajectory(ABC):
                 x = np.arange(t_start, self.get_number_entries_item(key=k))
             axis[i].plot(x, self.get_item(key=k), c=color)
             axis[i].set_ylabel(k)
+            if i <= len(keys) - 2:
+                axis[i].xaxis.set_ticklabels([])
         if show:
-            axis.show()
+            plt.show()
         if save:
-            axis.savefig(save_name + '.png')
+            save_figure(name=name, folder=folder)
 
     def trajectory(self) -> dict:
         return self._trajectory

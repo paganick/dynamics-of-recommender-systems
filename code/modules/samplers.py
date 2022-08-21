@@ -63,7 +63,8 @@ class SamplerRecommendation(Sampler):
     def plot(self, show: bool = True) -> None:
         super().plot(show=False)
         plt.xlabel('Recommendation')
-        plt.show()
+        if show:
+            plt.show()
 
 
 class SamplerOpinion(Sampler):
@@ -83,7 +84,8 @@ class SamplerOpinion(Sampler):
     def plot(self, show: bool = True) -> None:
         super().plot(show=False)
         plt.xlabel('Opinion')
-        plt.show()
+        if show:
+            plt.show()
 
 
 class UniformSampler(Sampler):
@@ -96,6 +98,10 @@ class UniformSampler(Sampler):
 
     @staticmethod
     def check_parameters(low: float, high: float) -> None:
+        if isinstance(low, np.ndarray) and low.size == 1:
+            low = low[0]
+        if isinstance(high, np.ndarray) and high.size == 1:
+            high = high[0]
         assert isinstance(low, float), 'low must be a float.'
         assert isinstance(high, float), 'high must be a float.'
         assert high >= low, 'high must be larger than low.'
@@ -116,6 +122,10 @@ class GaussianSampler(Sampler):
 
     @staticmethod
     def check_parameters(mean: float, std: float) -> None:
+        if isinstance(mean, np.ndarray) and mean.size == 1:
+            mean = mean[0]
+        if isinstance(std, np.ndarray) and std.size == 1:
+            std = std[0]
         assert isinstance(mean, float), 'mean must be a float.'
         assert isinstance(std, float), 'std must be a float.'
         assert std >= 0, 'std must be non-negative.'
@@ -140,6 +150,10 @@ class MixtureGaussianSampler(Sampler):  # TODO: this should become another class
 
     @staticmethod
     def check_parameters(mean: list, std: list) -> None:
+        if isinstance(mean, np.ndarray):
+            mean = mean.tolist()
+        if isinstance(std, np.ndarray):
+            std = std.tolist()
         assert isinstance(mean, list), 'mean must be a float.'
         assert isinstance(std, list), 'std must be a float.'
         assert len(mean) == len(std), 'The length of mean and std must be consistent.'

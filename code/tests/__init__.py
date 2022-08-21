@@ -1,1 +1,1 @@
-__all__ = ['testAlgorithm', 'testDynamics', 'testInputOutput', 'testUser', 'testPopulation', 'TestSaveLoad']
+__all__ = ['testAlgorithm', 'testDynamics', 'testInputOutput', 'testUser', 'testPopulation', 'testSaveLoad', 'testRun']

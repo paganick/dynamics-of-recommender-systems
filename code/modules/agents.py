@@ -1,8 +1,9 @@
 import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import List
-from modules.plotUtils import add_hist, plot_opinion_shift
+from modules.plotUtils import plot_opinion_shift, plot_opinions_time
 from modules.basic import Opinion, OpinionType, Recommendation, Reward
 from modules.utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
 from modules.utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
@@ -32,11 +33,15 @@ class OpinionDynamicsEntity(ABC):
         return
 
     @abstractmethod
-    def plot(self, save: bool = False, name: str = 'sim') -> None:
+    def plot(self, show: bool = True, save: bool = False, name: str = None, folder: str = None) -> None:
         return
 
     @abstractmethod
     def __eq__(self, other) -> bool:
+        pass
+
+    @abstractmethod
+    def save_trajectory_to_file(self, name: str = None, folder: str = None):
         pass
 
 
@@ -70,7 +75,7 @@ class User(OpinionDynamicsEntity):
             raise ValueError('Please input an initial state, or initialize with prejudice.')
         else:
             raise ValueError('Unknown input, received ' + type(initial_state).__name__ + '.')
-        if self.save_history:
+        if self.save_history:  # TODO: initial condition saved twice, fix
             self.trajectory.append(KEY_OPINION, self.opinion())
 
     def opinion(self) -> Opinion or None:
@@ -85,9 +90,9 @@ class User(OpinionDynamicsEntity):
         if self.opinion() is None:
             raise ValueError('Initialize state before updating it.')
         reward = self.reward(recommendation)
-        x_new = self.get_parameters().weight_prejudice*self.get_parameters().prejudice \
-                + self.get_parameters().weight_current_opinion*self.opinion() \
-                + self.get_parameters().weight_recommendation*recommendation
+        x_new = self.get_parameters().weight_prejudice * self.get_parameters().prejudice \
+                + self.get_parameters().weight_current_opinion * self.opinion() \
+                + self.get_parameters().weight_recommendation * recommendation
         self._x = Opinion(x_new)
         if self.save_history:
             self.trajectory.append(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION],
@@ -97,12 +102,17 @@ class User(OpinionDynamicsEntity):
     def __eq__(self, other) -> bool:
         return self.get_parameters() == other.get_parameters()
 
-    def plot(self, save: bool = False, name: str = 'sim') -> None:
+    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None) -> None:
         if not self.save_history:
             return
         self.trajectory.plot(keys=[KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION],
+                             show=show,
                              save=save,
-                             save_name=name)
+                             name=name,
+                             folder=folder)
+
+    def save_trajectory_to_file(self, name: str = None, folder: str = None) -> None:
+        self.trajectory.save_to_file(name=name, folder=folder)
 
 
 class Population(OpinionDynamicsEntity):
@@ -148,7 +158,7 @@ class Population(OpinionDynamicsEntity):
             raise ValueError('Either initialize with prejudice or input a given state.')
         elif initialize_with_prejudice:
             if self.identical():
-                self._x = self.parameters().prejudice*np.ones(self.n_agents())
+                self._x = self.parameters().prejudice * np.ones(self.n_agents())
             else:
                 self._x = self.parameters().prejudice
         elif isinstance(initial_state, SamplerOpinion):
@@ -160,16 +170,16 @@ class Population(OpinionDynamicsEntity):
         else:
             raise ValueError('Unknown input, received ' + type(initial_state) + '.')
         self._x = self.opinions()
-        if self.save_history:
+        if self.save_history: # TODO: initial condition saved twice, fix
             self.trajectory.append(keys=[KEY_OPINION, KEY_AVERAGE_OPINION, KEY_STD_OPINION],
                                    items=[self.opinions(), self.average_opinion(), self.std_opinion()])
 
     def update_state(self, recommendation: Recommendation) -> Reward:
         if self.identical():
             reward = self.parameters().reward(opinion=self.opinions(), recommendation=recommendation)
-            x_new = self.parameters().weight_prejudice*self.parameters().prejudice \
-                    + self.parameters().weight_current_opinion*self.opinions() \
-                    + self.parameters().weight_recommendation*recommendation
+            x_new = self.parameters().weight_prejudice * self.parameters().prejudice \
+                    + self.parameters().weight_current_opinion * self.opinions() \
+                    + self.parameters().weight_recommendation * recommendation
         else:
             reward = [self.parameters_user(i).reward(opinion=self.opinions()[i],
                                                      recommendation=r) for i, r in enumerate(recommendation)]
@@ -224,32 +234,43 @@ class Population(OpinionDynamicsEntity):
         else:
             raise ValueError("You can only compare two populations.")
 
-    def plot(self, save: bool = False, name: str = 'sim', intermediate: float = 0.5) -> None:
+    def save_trajectory_to_file(self, name: str = None, folder: str = None) -> None:
+        self.trajectory.save_to_file(name=name, folder=folder)
+
+    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None, intermediate: float = 0.5) -> None:
         if not self.save_history:
             return
         # average opinion, std, etc
-        self.trajectory.plot(keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
+        self.trajectory.plot(axis=None,
+                             keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
                              color='blue',
-                             show=True,
+                             show=show,
                              save=save,
-                             save_name=name)
+                             name=name,
+                             folder=folder)
         # plot Jules
-        _, ax = plt.subplots(nrows=1, ncols=1)
-        plot_opinion_shift(ax,
+        plot_opinion_shift(axis=None,
+                           axis_hist=None,
                            x_start=self.trajectory.get_item(key=KEY_OPINION)[0],
                            x_end=self.trajectory.get_item(key=KEY_OPINION)[-1],
                            color='blue',
-                           show=True,
+                           show=show,
                            save=save,
-                           save_name=name)
+                           name=name,
+                           folder=folder)
         # histograms
         length = self.trajectory.get_item(key=KEY_OPINION).shape[0]
-        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[0], density=True, alpha=0.7, label='Initial Opinion')
-        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[intermediate*length], density=True, alpha=0.7, label='Intermediate Opinion')
-        plt.hist(self.trajectory.get_item(key=KEY_OPINION)[length], density=True, alpha=0.7, label='Final Opinion')
-        plt.legend()
-        plt.show()
-        
+        plot_opinions_time(axis=None,
+                           x=[self.trajectory.get_item(key=KEY_OPINION)[0],
+                              self.trajectory.get_item(key=KEY_OPINION)[int(intermediate*length)],
+                              self.trajectory.get_item(key=KEY_OPINION)[-1]],
+                           color='blue',
+                           labels=['Initial', 'Intermediate', 'Final'],
+                           show=show,
+                           save=save,
+                           name=name + 'opinions_time',
+                           folder=folder)
+
 
 class PopulationIdentical(Population):  # TODO: implement this
     def __init__(self,
@@ -270,7 +291,7 @@ class Populations(OpinionDynamicsEntity):
                          save_history=save_history)
         self._populations = []
         if initial_state is None:
-            initial_state = [None]*len(parameters)
+            initial_state = [None] * len(parameters)
         for i, p in enumerate(parameters):
             self.add_population(parameters=p,
                                 initial_state=initial_state[i],
@@ -299,9 +320,10 @@ class Populations(OpinionDynamicsEntity):
     def populations(self):
         return self._populations
 
-    def initialize(self, initial_state: List[Opinion] or List[SamplerOpinion] or None = None, initialize_with_prejudice: bool = False) -> None:
+    def initialize(self, initial_state: List[Opinion] or List[SamplerOpinion] or None = None,
+                   initialize_with_prejudice: bool = False) -> None:
         if initial_state is None:
-            initial_state = [None]*self.n_populations()
+            initial_state = [None] * self.n_populations()
         for i in range(self.n_populations()):
             self._populations[i].initialize(initial_state=initial_state[i],
                                             initialize_with_prejudice=initialize_with_prejudice)
@@ -352,41 +374,50 @@ class Populations(OpinionDynamicsEntity):
                            parameters=par,
                            save_history=self.save_history or other.save_history)
 
-    def plot(self, save: bool = False, name: str = 'sim', intermediate: float = 0.5) -> None:
+    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None, intermediate: float = 0.5) -> None:
         if not self.save_history:
             return
         _, ax_aggregated_stuff = plt.subplots(nrows=4, ncols=1)
         _, ax_opinion_shift = plt.subplots(nrows=1, ncols=1)
-        _, ax_opinion_time = plt.subplots(nrows=1, ncols=1)
+        divider = make_axes_locatable(ax_opinion_shift)
+        ax_opinion_shift_hist = (divider.append_axes("top", 1, pad=0.15, sharex=ax_opinion_shift),
+                                 divider.append_axes("right", 1, pad=0.2, sharey=ax_opinion_shift))
+        _, ax_opinion_time = plt.subplots(nrows=self.n_populations(), ncols=1)
         colors = ['blue', 'red', 'green', 'yellow', 'magenta']
         for i, p in enumerate(self.populations()):
-            p.trajectory.plot(keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
+            p.trajectory.plot(axis=ax_aggregated_stuff,
+                              keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION,
+                                    KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
                               color=colors[i],
                               show=False,
                               save=save,
-                              save_name=name)
-            # average opinion, std, etc
-            self.trajectory.plot(axis=ax_aggregated_stuff,
-                                 keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
-                                 color=colors[i],
-                                 show=False,
-                                 save=save,
-                                 save_name=name)
+                              name=name + '_trajectory',
+                              folder=folder)
             # plot Jules
             plot_opinion_shift(axis=ax_opinion_shift,
+                               axis_hist=ax_opinion_shift_hist,
                                x_start=p.trajectory.get_item(key=KEY_OPINION)[0],
                                x_end=p.trajectory.get_item(key=KEY_OPINION)[-1],
                                color=colors[i],
-                               show=True,
+                               show=False,
                                save=save,
-                               save_name=name)
+                               name=name + '_opinions',
+                               folder=folder)
             # histograms
             length = p.trajectory.get_item(key=KEY_OPINION).shape[0]
-            ax_opinion_time.hist(p.trajectory.get_item(key=KEY_OPINION)[0], density=True, alpha=0.7, color=colors[i], label='Initial Opinion')
-            ax_opinion_time.hist(p.trajectory.get_item(key=KEY_OPINION)[intermediate*length], density=True, alpha=0.7, color=colors[i], label='Intermediate Opinion')
-            ax_opinion_time.hist(p.trajectory.get_item(key=KEY_OPINION)[length], density=True, alpha=0.7, color=colors[i], label='Final Opinion')
-            ax_opinion_time.legend()
-        ax_aggregated_stuff.show()
-        ax_opinion_shift.show()
-        ax_opinion_time.show()
+            plot_opinions_time(axis=ax_opinion_time[i],
+                               x=[p.trajectory.get_item(key=KEY_OPINION)[0],
+                                  p.trajectory.get_item(key=KEY_OPINION)[int(intermediate*length)],
+                                  p.trajectory.get_item(key=KEY_OPINION)[-1]],
+                               color=colors[i],
+                               labels=['Initial', 'Intermediate', 'Final'],
+                               show=False,
+                               save=save,
+                               name=name + '_opinions_time',
+                               folder=folder)
+        if show:
+            plt.show()
 
+    def save_trajectory_to_file(self, name: str = None, folder: str = None) -> None:
+        for i, p in enumerate(self.populations()):
+            p.trajectory.save_to_file(name=name + 'population_' + str(i+1), folder=folder)

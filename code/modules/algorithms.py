@@ -129,7 +129,7 @@ class UtilityMatrix(Algorithm):
                 # no exploration
                 # find agents for which things improved
                 if np.all(self.get_best_reward_so_far(population=i) >= reward[i]):  # no agents have improved
-                    r.append(self.get_best_recommendation_so_far())
+                    r.append(self.get_best_recommendation_so_far(population=i))
                 else:
                     idx_better = np.where(reward[i] > self.get_best_reward_so_far(population=i))[0]
                     # update best
