@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats
 from abc import ABC, abstractmethod
 from typing import List
 from modules.utils import Reward, ListReward, Recommendation, ListRecommendation
