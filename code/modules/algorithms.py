@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats
 from abc import ABC, abstractmethod
 from typing import List
 import matplotlib.pyplot as plt
