@@ -6,7 +6,7 @@ from modules.basic import Opinion
 from modules.agents import User
 
 
-class TestPopulation(unittest.TestCase):
+class TestPopulation(unittest.TestCase):  # TODO: implement this
     def testEqualPopulation(self):
         for _ in range(10):
             pass

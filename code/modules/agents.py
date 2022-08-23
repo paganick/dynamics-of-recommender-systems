@@ -71,11 +71,15 @@ class User(OpinionDynamicsEntity):
             self._x = initial_state.sample(number=1)
         elif isinstance(initial_state, OpinionType):
             self._x = initial_state
-        elif not initialize_with_prejudice and initial_state is None:
-            raise ValueError('Please input an initial state, or initialize with prejudice.')
+        elif initial_state is None:
+            if isinstance(self.initial_state(), SamplerOpinion):
+                self._x = self.initial_state().sample(1)
+            else:
+                self._x = self.initial_state()
         else:
             raise ValueError('Unknown input, received ' + type(initial_state).__name__ + '.')
-        if self.save_history:  # TODO: initial condition saved twice, fix
+        if self.save_history:
+            self.trajectory.reset()
             self.trajectory.append(KEY_OPINION, self.opinion())
 
     def opinion(self) -> Opinion or None:
@@ -162,15 +166,19 @@ class Population(OpinionDynamicsEntity):
             else:
                 self._x = self.parameters().prejudice
         elif isinstance(initial_state, SamplerOpinion):
-            self._x = initial_state.sample(number=self.n_agents())
+            self._x = initial_state.sample(number=self.n_agents())  # sample one
         elif isinstance(initial_state, OpinionType):
             self._x = initial_state
-        elif not initialize_with_prejudice and initial_state is None:
-            raise ValueError('Please input an initial state, or initialize with prejudice.')
+        elif initial_state is None:
+            if isinstance(self.initial_state(), SamplerOpinion):
+                self._x = self.initial_state().sample(number=self.n_agents())
+            else:
+                self._x = self.initial_state()
         else:
             raise ValueError('Unknown input, received ' + type(initial_state) + '.')
         self._x = self.opinions()
-        if self.save_history: # TODO: initial condition saved twice, fix
+        if self.save_history:
+            self.trajectory.reset()
             self.trajectory.append(keys=[KEY_OPINION, KEY_AVERAGE_OPINION, KEY_STD_OPINION],
                                    items=[self.opinions(), self.average_opinion(), self.std_opinion()])
 
@@ -251,35 +259,25 @@ class Population(OpinionDynamicsEntity):
         # plot Jules
         plot_opinion_shift(axis=None,
                            axis_hist=None,
-                           x_start=self.trajectory.get_item(key=KEY_OPINION)[0],
-                           x_end=self.trajectory.get_item(key=KEY_OPINION)[-1],
+                           x_start=self.trajectory[KEY_OPINION][0],
+                           x_end=self.trajectory[KEY_OPINION][-1],
                            color='blue',
                            show=show,
                            save=save,
                            name=name,
                            folder=folder)
         # histograms
-        length = self.trajectory.get_item(key=KEY_OPINION).shape[0]
+        length = self.trajectory.get_number_entries_item(KEY_OPINION)
         plot_opinions_time(axis=None,
-                           x=[self.trajectory.get_item(key=KEY_OPINION)[0],
-                              self.trajectory.get_item(key=KEY_OPINION)[int(intermediate*length)],
-                              self.trajectory.get_item(key=KEY_OPINION)[-1]],
+                           x=[self.trajectory[KEY_OPINION][0],
+                              self.trajectory[KEY_OPINION][int(intermediate*length)],
+                              self.trajectory[KEY_OPINION][-1]],
                            color='blue',
                            labels=['Initial', 'Intermediate', 'Final'],
                            show=show,
                            save=save,
                            name=name + 'opinions_time',
                            folder=folder)
-
-
-class PopulationIdentical(Population):  # TODO: implement this
-    def __init__(self,
-                 initial_state: Opinion,
-                 parameters: ParametersPopulation,
-                 save_history: bool) -> None:
-        super().__init__(initial_state=initial_state,
-                         parameters=parameters,
-                         save_history=save_history)
 
 
 class Populations(OpinionDynamicsEntity):
@@ -396,19 +394,19 @@ class Populations(OpinionDynamicsEntity):
             # plot Jules
             plot_opinion_shift(axis=ax_opinion_shift,
                                axis_hist=ax_opinion_shift_hist,
-                               x_start=p.trajectory.get_item(key=KEY_OPINION)[0],
-                               x_end=p.trajectory.get_item(key=KEY_OPINION)[-1],
+                               x_start=p.trajectory[KEY_OPINION][0],
+                               x_end=p.trajectory[KEY_OPINION][-1],
                                color=colors[i],
                                show=False,
                                save=save,
                                name=name + '_opinions',
                                folder=folder)
             # histograms
-            length = p.trajectory.get_item(key=KEY_OPINION).shape[0]
+            length = p.trajectory.get_number_entries_item(KEY_OPINION)
             plot_opinions_time(axis=ax_opinion_time[i],
-                               x=[p.trajectory.get_item(key=KEY_OPINION)[0],
-                                  p.trajectory.get_item(key=KEY_OPINION)[int(intermediate*length)],
-                                  p.trajectory.get_item(key=KEY_OPINION)[-1]],
+                               x=[p.trajectory[KEY_OPINION][0],
+                                  p.trajectory[KEY_OPINION][int(intermediate*length)],
+                                  p.trajectory[KEY_OPINION][-1]],
                                color=colors[i],
                                labels=['Initial', 'Intermediate', 'Final'],
                                show=False,

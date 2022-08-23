@@ -21,7 +21,8 @@ def plot_opinion_shift(axis: plt.axes,
         axis_hist = (divider.append_axes("top", 1, pad=0.15, sharex=axis),
                      divider.append_axes("right", 1, pad=0.2, sharey=axis))
     # plot the ideology
-    axis.scatter(x_start, x_end, 1)  # ideologies
+    # axis.grid(visible=True)
+    axis.scatter(x_start, x_end, 1, color=color)  # ideologies
     axis.plot([0, 1], [0, 1], 'r--', transform=axis.transAxes)  # identity
     # plt.xlabel('Initial Opinion')
     # plt.ylabel('Final Opinion')
@@ -57,7 +58,7 @@ def plot_opinions_time(axis: plt.axes,
     alpha = 0.7 # [0.1, 0.3, 0.5]
     colors = ['red', 'green', 'blue']
     for i, x_i in enumerate(x):
-        axis.hist(x_i, density=True, alpha=alpha, color=colors[i], label=labels[i])
+        axis.hist(x_i, bins=50, density=True, alpha=alpha, color=colors[i], label=labels[i])
     axis.legend()
     if show:
         plt.show()

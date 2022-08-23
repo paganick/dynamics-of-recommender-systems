@@ -57,7 +57,7 @@ class TestRun(unittest.TestCase):
                             exploration_frequency=50)
         simulator = Simulator(agent=population,
                               algorithm=alg)
-        simulator.run(horizon=102)
+        simulator.run(horizon=100, initialize=True)
         simulator.agent.plot(save=True, show=False, folder=self.test_directory, name='test_population')
         simulator.agent.save_trajectory_to_file(name='data_population', folder='results')
 
@@ -69,21 +69,20 @@ class TestRun(unittest.TestCase):
                             exploration_frequency=50)
         simulator = Simulator(agent=population,
                               algorithm=alg)
-        simulator.run(horizon=102)
+        simulator.run(horizon=100, initialize=True)
         simulator.agent.plot(save=True, show=self.show_plots, folder=self.test_directory, name='test_populations')
         simulator.agent.save_trajectory_to_file(name='data_populations', folder=self.test_directory)
 
     def testUser(self):
         user = User(parameters=self.parameters_1,
-                    initial_state=self.opinion_sampler_1.sample(1),  # input the sampler to get different initial conditions every time
+                    initial_state=self.opinion_sampler_1,
                     save_history=True)
         alg = UtilityMatrix(n_agents=1,
                             recommendation_sampler=self.recommendation_sampler,
                             exploration_probability=0.1,  # probability of exploring at every time step
                             exploration_frequency=10)  # force exploration every exploration_frequency steps
         simulator = Simulator(agent=user,
-                              algorithm=alg,
-                              initial_state=self.opinion_sampler_1.sample(1))
-        simulator.run(horizon=1000)
+                              algorithm=alg)
+        simulator.run(horizon=100, initialize=True)
         simulator.agent.plot(save=True, show=False, folder=self.test_directory, name='test_user')
         simulator.agent.save_trajectory_to_file(name='data_user', folder=self.test_directory)

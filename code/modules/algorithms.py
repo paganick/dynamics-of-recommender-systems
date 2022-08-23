@@ -1,6 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import List
+import matplotlib.pyplot as plt
 from modules.basic import Reward, Recommendation
 from modules.samplers import SamplerRecommendation
 
@@ -61,31 +63,36 @@ class UtilityMatrix(Algorithm):
         self._best_recommendation_so_far = [Recommendation(np.nan*np.ones(n)) for n in self.n_agents()]
         self._last_recommendation = [Recommendation(np.nan*np.ones(n)) for n in self.n_agents()]
 
+    def get_population_index(self, population: int or None = None) -> int:
+        if self.n_populations() == 1:
+            if population is None or population == 0:
+                return 0
+            elif isinstance(population, int) and population != 0:
+                raise ValueError('Index not valid, there is only one population.')
+            else:
+                raise ValueError('Unknown input type, given ' + str(population) + '.')
+        else:
+            if isinstance(population, int) and 0 <= population <= self.n_populations() - 1:
+                return population
+            else:
+                raise ValueError('Unknown input type,  please input an integer larger than 0.')
+
     def get_best_recommendation_so_far(self, population: int = None, idx: np.ndarray = None) -> Recommendation:
-        if self.n_populations() != 1 and population is None:
-            raise ValueError('Please input population index.')
-        if self.n_populations() == 1 and population is None:
-            population = 0
+        population = self.get_population_index(population=population)
         if idx is None:
             return self._best_recommendation_so_far[population]
         else:
             return self._best_recommendation_so_far[population][idx]
 
     def get_best_reward_so_far(self, population: int = None, idx: np.ndarray = None) -> Reward:
-        if self.n_populations() != 1 and population is None:
-            raise ValueError('Please input population index.')
-        if self.n_populations() == 1 and population is None:
-            population = 0
+        population = self.get_population_index(population=population)
         if idx is None:
             return self._best_reward_so_far[population]
         else:
             return self._best_reward_so_far[population][idx]
 
     def get_last_recommendation(self, population: int or None = None, idx: np.ndarray or None = None) -> Recommendation:
-        if self.n_populations() != 1 and population is None:
-            raise ValueError('Please input population index.')
-        if self.n_populations() == 1 and population is None:
-            population = 0
+        population = self.get_population_index(population=population)
         if idx is None:
             return self._last_recommendation[population]
         else:
@@ -148,3 +155,6 @@ class UtilityMatrix(Algorithm):
             return r[0]  # do not return a list if one population only
         else:
             return r
+
+    def plot(self) -> None:
+        pass

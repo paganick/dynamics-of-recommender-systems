@@ -39,9 +39,9 @@ class Sampler(ABC):  # TODO: distinguish abstract sampler, basic sampler, and mi
     def support(self) -> tuple:
         return self.distribution().support()
 
-    def plot(self, show: bool = True) -> None:
+    def plot(self, show: bool = True, color: str = 'blue') -> None:
         samples = self.sample(number=10000)
-        plt.hist(x=samples, bins=50)
+        plt.hist(x=samples, bins=50, color=color)
         if show:
             plt.show()
 
@@ -81,8 +81,8 @@ class SamplerOpinion(Sampler):
         out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
         return out
 
-    def plot(self, show: bool = True) -> None:
-        super().plot(show=False)
+    def plot(self, show: bool = True, color: str = 'blue') -> None:
+        super().plot(show=False, color=color)
         plt.xlabel('Opinion')
         if show:
             plt.show()
