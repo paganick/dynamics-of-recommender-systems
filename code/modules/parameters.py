@@ -4,6 +4,7 @@ from typing import List
 from modules.basic import Opinion, Recommendation
 from modules.utils import KEY_PARAMETERS_USERS, KEY_N_AGENTS, KEY_USER
 from modules.rewardsFunctions import RewardFunction, load_reward_function
+from modules.samplers import SamplerOpinion
 
 
 class Parameters(ABC):
@@ -28,7 +29,7 @@ class Parameters(ABC):
 
 class ParametersUser(Parameters):
     def __init__(self,
-                 prejudice: Opinion or float,
+                 prejudice: Opinion or float,  # TODO: implement sampler as prejudice
                  weight_prejudice: float,
                  weight_current_opinion: float,
                  weight_recommendation: float,

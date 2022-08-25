@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import List
-from modules.plotUtils import plot_opinion_shift, plot_opinions_time
+from modules.plotUtils import plot_opinion_shift, plot_opinions_time, plot_sankey_single_population, \
+    plot_sankey_multiple_populations
 from modules.basic import Opinion, OpinionType, Recommendation, Reward
 from modules.utils import KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD
 from modules.utils import KEY_AVERAGE_OPINION, KEY_AVERAGE_RECOMMENDATION, KEY_AVERAGE_REWARD, KEY_STD_OPINION
@@ -33,8 +34,8 @@ class OpinionDynamicsEntity(ABC):
         return
 
     @abstractmethod
-    def plot(self, show: bool = True, save: bool = False, name: str = None, folder: str = None) -> None:
-        return
+    def plot(self, show: bool = True, save: bool = False, name: str = None, folder: str = None) -> tuple:
+        pass
 
     @abstractmethod
     def __eq__(self, other) -> bool:
@@ -245,12 +246,14 @@ class Population(OpinionDynamicsEntity):
     def save_trajectory_to_file(self, name: str = None, folder: str = None) -> None:
         self.trajectory.save_to_file(name=name, folder=folder)
 
-    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None, intermediate: float = 0.5) -> None:
+    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None,
+             intermediate: float = 0.5) -> tuple:
         if not self.save_history:
-            return
+            raise ValueError('Cannot produce plot, no history saved.')
         # average opinion, std, etc
         self.trajectory.plot(axis=None,
-                             keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION],
+                             keys=[KEY_AVERAGE_OPINION, KEY_STD_OPINION, KEY_AVERAGE_REWARD,
+                                   KEY_AVERAGE_RECOMMENDATION],
                              color='blue',
                              show=show,
                              save=save,
@@ -270,7 +273,7 @@ class Population(OpinionDynamicsEntity):
         length = self.trajectory.get_number_entries_item(KEY_OPINION)
         plot_opinions_time(axis=None,
                            x=[self.trajectory[KEY_OPINION][0],
-                              self.trajectory[KEY_OPINION][int(intermediate*length)],
+                              self.trajectory[KEY_OPINION][int(intermediate * length)],
                               self.trajectory[KEY_OPINION][-1]],
                            color='blue',
                            labels=['Initial', 'Intermediate', 'Final'],
@@ -278,6 +281,10 @@ class Population(OpinionDynamicsEntity):
                            save=save,
                            name=name + 'opinions_time',
                            folder=folder)
+        # Sankey
+        sankey_plot_data = plot_sankey_single_population(x=(self.trajectory[KEY_RECOMMENDATION][0],
+                                                            self.trajectory[KEY_OPINION][-1]))
+        return sankey_plot_data
 
 
 class Populations(OpinionDynamicsEntity):
@@ -372,9 +379,10 @@ class Populations(OpinionDynamicsEntity):
                            parameters=par,
                            save_history=self.save_history or other.save_history)
 
-    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None, intermediate: float = 0.5) -> None:
+    def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None,
+             intermediate: float = 0.5) -> tuple:
         if not self.save_history:
-            return
+            raise ValueError('Cannot produce plot, no history saved.')
         _, ax_aggregated_stuff = plt.subplots(nrows=4, ncols=1)
         _, ax_opinion_shift = plt.subplots(nrows=1, ncols=1)
         divider = make_axes_locatable(ax_opinion_shift)
@@ -405,7 +413,7 @@ class Populations(OpinionDynamicsEntity):
             length = p.trajectory.get_number_entries_item(KEY_OPINION)
             plot_opinions_time(axis=ax_opinion_time[i],
                                x=[p.trajectory[KEY_OPINION][0],
-                                  p.trajectory[KEY_OPINION][int(intermediate*length)],
+                                  p.trajectory[KEY_OPINION][int(intermediate * length)],
                                   p.trajectory[KEY_OPINION][-1]],
                                color=colors[i],
                                labels=['Initial', 'Intermediate', 'Final'],
@@ -413,9 +421,14 @@ class Populations(OpinionDynamicsEntity):
                                save=save,
                                name=name + '_opinions_time',
                                folder=folder)
+        # Sankey
+        sankey_plot_data = plot_sankey_multiple_populations(x=([(p.trajectory[KEY_RECOMMENDATION][0],
+                                                                 p.trajectory[KEY_OPINION][-1]) for p in
+                                                                self.populations()]))
         if show:
             plt.show()
+        return sankey_plot_data
 
     def save_trajectory_to_file(self, name: str = None, folder: str = None) -> None:
         for i, p in enumerate(self.populations()):
-            p.trajectory.save_to_file(name=name + 'population_' + str(i+1), folder=folder)
+            p.trajectory.save_to_file(name=name + 'population_' + str(i + 1), folder=folder)

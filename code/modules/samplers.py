@@ -60,7 +60,7 @@ class SamplerRecommendation(Sampler):
         out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
         return out
 
-    def plot(self, show: bool = True) -> None:
+    def plot(self, show: bool = True, color: str = 'blue') -> None:
         super().plot(show=False)
         plt.xlabel('Recommendation')
         if show:
