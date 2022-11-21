@@ -1,8 +1,11 @@
 from abc import ABC
+import numpy as np
+import scipy
 from modules.agents import OpinionDynamicsEntity
 from modules.algorithms import Algorithm
 from modules.basic import Opinion, OpinionType
 from modules.samplers import SamplerOpinion
+from modules.utils import KEY_OPINION
 
 
 class Simulator(ABC):
@@ -34,8 +37,23 @@ class Simulator(ABC):
                                                       time=t)
             reward = self.agent.update_state(recommendation=r)
 
-    def metrics(self) -> None:  # TODO: metrics
-        pass
+    def metrics(self) -> dict:  # TODO: metrics
+        tol = 0.1
+        # percentage
+        delta_initial_opinion = np.abs(self.agent.trajectory['opinion'][0, :] - self.agent.trajectory['opinion'][-1, :])
+        delta_initial_recommendation = np.abs(self.agent.trajectory['recommendation'][0, :] - self.agent.trajectory['opinion'][-1, :])
+        # final distribution
+        percentage = {'distance_initial_opinion': np.mean(delta_initial_opinion),
+                      'distance_initial_recommendation': np.mean(delta_initial_recommendation),
+                      'close_initial_opinion': np.sum(delta_initial_opinion < tol)/self.agent.n_agents(),
+                      'close_initial_recommendation': np.sum(delta_initial_recommendation < tol)/self.agent.n_agents(),
+                      'wasserstein_distance_initial_opinion': scipy.stats.wasserstein_distance(self.agent.trajectory['opinion'][0, :],
+                                                                                               self.agent.trajectory['opinion'][-1, :]),
+                      'wasserstein_distance_initial_recommendation': scipy.stats.wasserstein_distance(self.agent.trajectory['recommendation'][0, :],
+                                                                                                      self.agent.trajectory['opinion'][-1, :]),
+                      'final_distribution': self.agent.trajectory[KEY_OPINION][-1],
+                      }
+        return percentage
 
     def save(self) -> dict:  # TODO
         pass

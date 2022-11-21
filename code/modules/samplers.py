@@ -39,6 +39,9 @@ class Sampler(ABC):  # TODO: distinguish abstract sampler, basic sampler, and mi
     def support(self) -> tuple:
         return self.distribution().support()
 
+    def wasserstein_distance(self) -> float:
+        return None  # TODO: implement
+
     def plot(self, show: bool = True, color: str = 'blue') -> None:
         samples = self.sample(number=10000)
         plt.hist(x=samples, bins=50, color=color)

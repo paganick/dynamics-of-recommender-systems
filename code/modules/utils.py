@@ -63,6 +63,8 @@ KEY_SQUARED_EXPONENTIAL_REWARD = 'squared_exponential'
 KEY_EXPONENTIAL_REWARD = 'exponential'
 KEY_REWARD_TYPE = 'type'
 KEY_REWARD_DECAY_PARAMETER = 'decay_parameter'
+KEY_BETTER_REWARD = 'got_better_reward'
+KEY_EXPLORATION = 'explored'
 
 # keys recommendation sampler
 KEY_SAMPLER_TYPE = 'type'
