@@ -3,7 +3,7 @@ import numpy as np
 import os
 from abc import ABC
 from typing import List
-from modules.saveUtils import save_dict_to_file, save_figure
+from modules.saveUtils import save_dict_to_file, save_figure, save_csv
 
 
 class Trajectory(ABC):
@@ -84,6 +84,19 @@ class Trajectory(ABC):
             plt.show()
         if save:
             save_figure(name=name, folder=folder)
+
+    def save_to_csv(self,
+                    key: str,
+                    idx: int or List[int] or None,
+                    folder: str = None,
+                    name: str = None):
+        x = self.__getitem__(item=key)
+        if len(x.shape) == 1 or idx is None:
+            save_csv(data=x.T, folder=folder, name=name)
+        elif len(x.shape) == 2 and idx is not None:
+            save_csv(data=x[idx, :].T, folder=folder, name=name)
+        else:
+            raise ValueError('Unknown.')
 
     def trajectory(self) -> dict:
         return self._trajectory

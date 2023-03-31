@@ -183,6 +183,8 @@ class UtilityMatrix(Algorithm):
         if not self.save_history:
             return
         _, ax_exploration = plt.subplots(nrows=self.n_populations(), ncols=1)
+        if self.n_populations() == 1:
+            ax_exploration = [ax_exploration]
         for i in range(self.n_populations()):
             t = self.trajectory[i]
             x = np.arange(0, t.get_number_entries_item(key=KEY_BETTER_REWARD))

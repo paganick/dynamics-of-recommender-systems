@@ -1,5 +1,6 @@
 import deepdish as dd
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 
@@ -32,8 +33,19 @@ def save_figure(name: str = None, folder: str = None, extension: str = 'png') ->
     if name is None:
         raise ValueError('Input a name for the figure.')
     if folder is None:
-        folder = '' # current folder
+        folder = ''  # current folder
     if not os.path.isdir(folder) and folder != '':
         os.makedirs(folder)
     name, _ = os.path.splitext(name)  # remove extension
     plt.savefig(os.path.join(folder, name + '.png'), format=extension)
+
+
+def save_csv(data: np.ndarray, name: str = None, folder: str = None) -> None:
+    if name is None:
+        raise ValueError('Input a name for the csv.')
+    if folder is None:
+        folder = ''  # current folder
+    if not os.path.isdir(folder) and folder != '':
+        os.makedirs(folder)
+    name, _ = os.path.splitext(name)  # remove extension
+    np.savetxt(os.path.join(folder, name + '.csv'), data, delimiter=",")

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from modules.basic import Opinion, Recommendation
 from modules.utils import KEY_SAMPLER_TYPE, KEY_SAMPLER_OBJECT
 from modules.utils import KEY_SAMPLER_OBJECT_RECOMMENDATION, KEY_SAMPLER_OBJECT_OPINION
+from modules.utils import KEY_SAMPLER_TYPE_DETERMINISTIC, KEY_SAMPLER_DETERMINISTIC_VALUE
 from modules.utils import KEY_SAMPLER_TYPE_UNIFORM, KEY_SAMPLER_UNIFORM_LOW, KEY_SAMPLER_UNIFORM_HIGH
 from modules.utils import KEY_SAMPLER_TYPE_GAUSSIAN, KEY_SAMPLER_GAUSSIAN_MEAN, KEY_SAMPLER_GAUSSIAN_STD
 from modules.utils import KEY_SAMPLER_TYPE_MIXTURE_GAUSSIAN, KEY_SAMPLER_MIXTURE_GAUSSIAN_MEAN, KEY_SAMPLER_MIXTURE_GAUSSIAN_STD
@@ -59,9 +60,7 @@ class SamplerRecommendation(Sampler):
         return Recommendation(super().sample(number=number, seed=seed))
 
     def save(self) -> dict:
-        out = super().save()
-        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
-        return out
+        return {KEY_SAMPLER_OBJECT: KEY_SAMPLER_OBJECT_RECOMMENDATION}
 
     def plot(self, show: bool = True, color: str = 'blue') -> None:
         super().plot(show=False)
@@ -80,15 +79,31 @@ class SamplerOpinion(Sampler):
         return Opinion(super().sample(number=number, seed=seed))
 
     def save(self) -> dict:
-        out = super().save()
-        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
-        return out
+        return {KEY_SAMPLER_OBJECT: KEY_SAMPLER_OBJECT_OPINION}
 
     def plot(self, show: bool = True, color: str = 'blue') -> None:
         super().plot(show=False, color=color)
         plt.xlabel('Opinion')
         if show:
             plt.show()
+
+
+class DeterministicSampler(Sampler):
+    def __init__(self,
+                 value: float) -> None:
+        super().__init__()
+        self.check_parameters(value=value)
+        self._distribution = scipy.stats.rv_discrete(name='deterministic', values=(value, 1.0))
+
+    @staticmethod
+    def check_parameters(value: float) -> None:
+        if isinstance(value, np.ndarray) and value.size == 1:
+            value = value[0]
+        assert isinstance(value, float), 'value must be a float.'
+
+    def save(self) -> dict:
+        return {KEY_SAMPLER_TYPE: KEY_SAMPLER_TYPE_DETERMINISTIC,
+                KEY_SAMPLER_DETERMINISTIC_VALUE: self.expected_value()}
 
 
 class UniformSampler(Sampler):
@@ -199,11 +214,38 @@ class MixtureGaussianSampler(Sampler):  # TODO: this should become another class
                 KEY_SAMPLER_MIXTURE_GAUSSIAN_STD: self.standard_deviations()}
 
 
+class DeterministicSamplerRecommendation(DeterministicSampler, SamplerRecommendation):
+    def __init__(self,
+                 value: float) -> None:
+        super().__init__(value=value)
+
+    def save(self) -> dict:
+        out = super(DeterministicSamplerRecommendation, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
+        return out
+
+
+class DeterministicSamplerOpinion(DeterministicSampler, SamplerOpinion):
+    def __init__(self,
+                 value: float) -> None:
+        super().__init__(value=value)
+
+    def save(self) -> dict:
+        out = super(DeterministicSamplerOpinion, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
+        return out
+
+
 class UniformSamplerRecommendation(UniformSampler, SamplerRecommendation):
     def __init__(self,
                  low: float,
                  high: float) -> None:
         super().__init__(low=low, high=high)
+        
+    def save(self) -> dict:
+        out = super(UniformSamplerRecommendation, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
+        return out
 
 
 class UniformSamplerOpinion(UniformSampler, SamplerOpinion):
@@ -212,12 +254,22 @@ class UniformSamplerOpinion(UniformSampler, SamplerOpinion):
                  high: float) -> None:
         super().__init__(low=low, high=high)
 
+    def save(self) -> dict:
+        out = super(UniformSampler, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
+        return out
+
 
 class GaussianSamplerRecommendation(GaussianSampler, SamplerRecommendation):
     def __init__(self,
                  mean: float,
                  std: float) -> None:
         super().__init__(mean=mean, std=std)
+
+    def save(self) -> dict:
+        out = super(GaussianSamplerRecommendation, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
+        return out
 
 
 class GaussianSamplerOpinion(GaussianSampler, SamplerOpinion):
@@ -227,12 +279,22 @@ class GaussianSamplerOpinion(GaussianSampler, SamplerOpinion):
         super().__init__(mean=mean,
                          std=std)
 
+    def save(self) -> dict:
+        out = super(GaussianSamplerOpinion, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
+        return out
+
 
 class MixtureGaussianSamplerRecommendation(MixtureGaussianSampler, SamplerRecommendation):
     def __init__(self,
                  mean: list,
                  std: list) -> None:
         super().__init__(mean=mean, std=std)
+
+    def save(self) -> dict:
+        out = super(MixtureGaussianSamplerRecommendation, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_RECOMMENDATION
+        return out
 
 
 class MixtureGaussianSamplerOpinion(MixtureGaussianSampler, SamplerOpinion):
@@ -241,14 +303,26 @@ class MixtureGaussianSamplerOpinion(MixtureGaussianSampler, SamplerOpinion):
                  std: list) -> None:
         super().__init__(mean=mean, std=std)
 
+    def save(self) -> dict:
+        out = super(MixtureGaussianSamplerOpinion, self).save()
+        out[KEY_SAMPLER_OBJECT] = KEY_SAMPLER_OBJECT_OPINION
+        return out
 
-def load_import_recommendation_sampler(parameters:dict) -> Sampler:
+
+def load_sampler(parameters: dict) -> Sampler:
     if not isinstance(parameters, dict) or KEY_SAMPLER_TYPE not in parameters:
         raise ValueError('Unknown input type.')
     if KEY_SAMPLER_TYPE in parameters:
         key_objection = KEY_SAMPLER_OBJECT
     else:
         key_objection = None
+    if parameters[KEY_SAMPLER_TYPE] == KEY_SAMPLER_TYPE_DETERMINISTIC:
+        if key_objection == KEY_SAMPLER_OBJECT_RECOMMENDATION:
+            return DeterministicSamplerRecommendation(value=parameters[KEY_SAMPLER_DETERMINISTIC_VALUE])
+        elif key_objection == KEY_SAMPLER_OBJECT_RECOMMENDATION:
+            return DeterministicSamplerOpinion(value=parameters[KEY_SAMPLER_DETERMINISTIC_VALUE])
+        else:
+            return DeterministicSampler(value=parameters[KEY_SAMPLER_DETERMINISTIC_VALUE])
     if parameters[KEY_SAMPLER_TYPE] == KEY_SAMPLER_TYPE_UNIFORM:
         if key_objection == KEY_SAMPLER_OBJECT_RECOMMENDATION:
             return UniformSamplerRecommendation(low=parameters[KEY_SAMPLER_UNIFORM_LOW],

@@ -4,7 +4,7 @@ from typing import List
 from modules.basic import Opinion, Recommendation
 from modules.utils import KEY_PARAMETERS_USERS, KEY_N_AGENTS, KEY_USER
 from modules.rewardsFunctions import RewardFunction, load_reward_function
-from modules.samplers import SamplerOpinion
+from modules.samplers import SamplerOpinion, load_sampler
 
 
 class Parameters(ABC):
@@ -29,7 +29,7 @@ class Parameters(ABC):
 
 class ParametersUser(Parameters):
     def __init__(self,
-                 prejudice: Opinion or float,  # TODO: implement sampler as prejudice
+                 prejudice: Opinion or float,
                  weight_prejudice: float,
                  weight_current_opinion: float,
                  weight_recommendation: float,
@@ -66,7 +66,7 @@ class ParametersUser(Parameters):
         for i in range(n_points):
             if ok_5:
                 for j in range(n_points):
-                    oij, rij = Opinion(o[i,j]), Recommendation(r[i,j])
+                    oij, rij = Opinion(o[i, j]), Recommendation(r[i, j])
                     ok_5 = ok_5 and np.abs(self.reward(oij, rij) - other.reward(oij, rij)) < 1e-6
             else:
                 break
@@ -74,7 +74,7 @@ class ParametersUser(Parameters):
 
 
 def load_parameters_user(parameters: dict) -> ParametersUser:
-    return ParametersUser(prejudice=Opinion(parameters['prejudice']),
+    return ParametersUser(prejudice=parameters['prejudice'],
                           weight_prejudice=parameters['weight_prejudice'],
                           weight_current_opinion=parameters['weight_current_opinion'],
                           weight_recommendation=parameters['weight_recommendation'],
@@ -84,10 +84,12 @@ def load_parameters_user(parameters: dict) -> ParametersUser:
 class ParametersPopulation(Parameters):
     def __init__(self,
                  parameters: ParametersUser or List[ParametersUser],
-                 repeat: int or None = None) -> None:
+                 repeat: int or None = None,
+                 prejudice_sampler: SamplerOpinion or None = None) -> None:
         super().__init__()
         if isinstance(parameters, list):
-            self._identical = False
+            self._identical_same_prejudice = False
+            self._identical_different_prejudice = False
             self._n_agents = len(parameters)
             self.prejudice = np.asarray([p.prejudice for p in parameters])
             self.weight_prejudice = np.asarray([p.weight_prejudice for p in parameters])
@@ -97,9 +99,15 @@ class ParametersPopulation(Parameters):
             if repeat is not None and repeat != 1:
                 raise ValueError('Currently not supported, repeat only works if one parameter is he input.')
         elif isinstance(parameters, ParametersUser):
-            self._identical = True
             self._n_agents = repeat
-            self.prejudice = parameters.prejudice
+            if prejudice_sampler is not None:
+                self._identical_same_prejudice = False
+                self._identical_different_prejudice = True
+                self.prejudice = prejudice_sampler.sample(number=self.n_agents())
+            else:
+                self._identical_same_prejudice = True
+                self._identical_different_prejudice = False
+                self.prejudice = parameters.prejudice
             self.weight_prejudice = parameters.weight_prejudice
             self.weight_current_opinion = parameters.weight_current_opinion
             self.weight_recommendation = parameters.weight_recommendation
@@ -107,15 +115,24 @@ class ParametersPopulation(Parameters):
         else:
             raise ValueError('Unknown input type.')
 
-    def identical(self) -> bool:
-        return self._identical
+    def identical_same_prejudice(self) -> bool:
+        return self._identical_same_prejudice
+
+    def identical_different_prejudice(self) -> bool:
+        return self._identical_different_prejudice
 
     def n_agents(self) -> int:
         return self._n_agents
 
     def __getitem__(self, item: int) -> ParametersUser:
-        if self.identical():
+        if self.identical_same_prejudice():
             return ParametersUser(prejudice=self.prejudice,
+                                  weight_prejudice=self.weight_prejudice,
+                                  weight_current_opinion=self.weight_current_opinion,
+                                  weight_recommendation=self.weight_recommendation,
+                                  reward=self.reward)
+        if self.identical_different_prejudice():
+            return ParametersUser(prejudice=self.prejudice[item],
                                   weight_prejudice=self.weight_prejudice,
                                   weight_current_opinion=self.weight_current_opinion,
                                   weight_recommendation=self.weight_recommendation,
@@ -128,7 +145,7 @@ class ParametersPopulation(Parameters):
                                   reward=self.reward[item])
 
     def save(self) -> dict:
-        if self.identical():
+        if self.identical_same_prejudice():
             out = {KEY_N_AGENTS: self.n_agents(),
                    KEY_PARAMETERS_USERS: self.__getitem__(item=0).save()}  # simply save one of the users
         else:
@@ -140,8 +157,6 @@ class ParametersPopulation(Parameters):
     def __eq__(self, other) -> bool:
         if self.n_agents() != other.n_agents():
             return False
-        if self.identical() and other.identical():
-            return self.__getitem__(0) == other.__getitem__(0)
         else:
             for i in range(self.n_agents()):
                 if self.__getitem__(i) != other.__getitem__(i):

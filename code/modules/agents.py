@@ -21,9 +21,13 @@ class OpinionDynamicsEntity(ABC):
         self.trajectory = None
         self._x = None
         self._initial_state = initial_state
+        self._last_initial_state = None
 
     def initial_state(self) -> SamplerOpinion or Opinion:
         return self._initial_state
+
+    def last_initial_state(self) -> SamplerOpinion or Opinion:
+        return self._last_initial_state
 
     @abstractmethod
     def initialize(self, initial_state, initialize_with_prejudice: bool = False) -> None:
@@ -50,13 +54,14 @@ class User(OpinionDynamicsEntity):
     def __init__(self,
                  parameters: ParametersUser,
                  initial_state: Opinion or SamplerOpinion or None = None,
+                 initialize_with_prejudice: bool = False,
                  save_history: bool = False) -> None:
         super().__init__(initial_state=initial_state,
                          save_history=save_history)
         self._parameters = parameters
         self.trajectory = Trajectory([KEY_OPINION, KEY_REWARD, KEY_RECOMMENDATION])
         self.initialize(initial_state=self.initial_state(),
-                        initialize_with_prejudice=False)
+                        initialize_with_prejudice=initialize_with_prejudice)
 
     def get_parameters(self) -> ParametersUser:
         return self._parameters
@@ -74,11 +79,12 @@ class User(OpinionDynamicsEntity):
             self._x = initial_state
         elif initial_state is None:
             if isinstance(self.initial_state(), SamplerOpinion):
-                self._x = self.initial_state().sample(1)
+                self._x = self.initial_state().sample(number=1)
             else:
                 self._x = self.initial_state()
         else:
             raise ValueError('Unknown input, received ' + type(initial_state).__name__ + '.')
+        self._last_initial_state = self.opinion()  # store initial state
         if self.save_history:
             self.trajectory.reset()
             self.trajectory.append(KEY_OPINION, self.opinion())
@@ -124,23 +130,29 @@ class Population(OpinionDynamicsEntity):
     def __init__(self,
                  parameters: ParametersPopulation,
                  initial_state: Opinion or SamplerOpinion or None = None,
+                 initialize_with_prejudice: bool = False,
                  save_history: bool = True) -> None:
         super().__init__(initial_state=initial_state,
                          save_history=save_history)
         self._n_agents = parameters.n_agents()
         self._users = []
-        self._identical = parameters.identical()
+        self._identical_same_prejudice = parameters.identical_same_prejudice()
+        self._identical_different_prejudice = parameters.identical_different_prejudice()
         self._parameters = parameters
         self.trajectory = Trajectory([KEY_OPINION, KEY_RECOMMENDATION, KEY_REWARD, KEY_AVERAGE_OPINION,
                                       KEY_STD_OPINION, KEY_AVERAGE_REWARD, KEY_AVERAGE_RECOMMENDATION])
         # this will initialize the users again -- thus, the initialization above does not matter
-        self.initialize(initial_state=self.initial_state(), initialize_with_prejudice=False)
+        self.initialize(initial_state=self.initial_state(),
+                        initialize_with_prejudice=initialize_with_prejudice)
 
     def n_agents(self) -> int:
         return self._n_agents
 
-    def identical(self) -> bool:
-        return self._identical
+    def identical_same_prejudice(self) -> bool:
+        return self._identical_same_prejudice
+
+    def identical_different_prejudice(self) -> bool:
+        return self._identical_different_prejudice
 
     def get_user(self, idx: int) -> User:
         return User(parameters=self.parameters_user(item=idx),
@@ -162,7 +174,7 @@ class Population(OpinionDynamicsEntity):
         if initialize_with_prejudice and initial_state is not None:
             raise ValueError('Either initialize with prejudice or input a given state.')
         elif initialize_with_prejudice:
-            if self.identical():
+            if self.identical_same_prejudice():
                 self._x = self.parameters().prejudice * np.ones(self.n_agents())
             else:
                 self._x = self.parameters().prejudice
@@ -177,14 +189,14 @@ class Population(OpinionDynamicsEntity):
                 self._x = self.initial_state()
         else:
             raise ValueError('Unknown input, received ' + type(initial_state) + '.')
-        self._x = self.opinions()
+        self._last_initial_state = self.opinions()
         if self.save_history:
             self.trajectory.reset()
             self.trajectory.append(keys=[KEY_OPINION, KEY_AVERAGE_OPINION, KEY_STD_OPINION],
                                    items=[self.opinions(), self.average_opinion(), self.std_opinion()])
 
     def update_state(self, recommendation: Recommendation) -> Reward:
-        if self.identical():
+        if self.identical_same_prejudice() or self.identical_different_prejudice():
             reward = self.parameters().reward(opinion=self.opinions(), recommendation=recommendation)
             x_new = self.parameters().weight_prejudice * self.parameters().prejudice \
                     + self.parameters().weight_current_opinion * self.opinions() \
@@ -219,19 +231,12 @@ class Population(OpinionDynamicsEntity):
 
     def __add__(self, other):
         if isinstance(other, Population):
-            par = [self.parameters(), other.parameters()]
-            ini = [self.initial_state(), other.initial_state()]
+            return Populations(populations=[self, other])
         elif isinstance(other, Populations):
-            par = [self.parameters()]
-            ini = [self.initial_state()]
-            for p in other.populations():
-                par.append(p.parameters())
-                ini.append(p.initial_state())
+            other.add_population(population=self)
+            return other
         else:
             raise ValueError('Unknown input type.')
-        return Populations(initial_state=ini,
-                           parameters=par,
-                           save_history=self.save_history or other.save_history)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Population):
@@ -289,26 +294,47 @@ class Population(OpinionDynamicsEntity):
 
 class Populations(OpinionDynamicsEntity):
     def __init__(self,
-                 parameters: List[ParametersPopulation],
+                 populations: List[Population] or None  = None,
+                 parameters: List[ParametersPopulation] or  None = None,
                  initial_state: List[Opinion] or List[SamplerOpinion] or None = None,
+                 initialize_with_prejudice: bool = False,
                  save_history: bool = True) -> None:
         super().__init__(initial_state=initial_state,
                          save_history=save_history)
-        self._populations = []
-        if initial_state is None:
-            initial_state = [None] * len(parameters)
-        for i, p in enumerate(parameters):
-            self.add_population(parameters=p,
-                                initial_state=initial_state[i],
-                                save_history=save_history)
+        if populations is not None and isinstance(populations, List):  # populations already in the right format
+            self._populations = populations
+        elif parameters is not None and isinstance(parameters, list):  # populations first to create
+            self._populations = []
+            if initial_state is None:
+                initial_state = [None] * len(parameters)
+            for i, p in enumerate(parameters):
+                self.add_population(parameters=p,
+                                    initial_state=initial_state[i],
+                                    initialize_with_prejudice=initialize_with_prejudice,
+                                    save_history=save_history)
 
     def add_population(self,
-                       parameters: ParametersPopulation,
+                       population: Population or None = None,
+                       parameters: ParametersPopulation or None = None,
                        initial_state: Opinion or SamplerOpinion or None = None,
+                       initialize_with_prejudice:  bool = False,
                        save_history: bool = True):
-        self._populations.append(Population(parameters=parameters,
-                                            initial_state=initial_state,
-                                            save_history=save_history))
+        if population is not None:
+            assert isinstance(population, Population),'Please check type of population.'
+            self._populations.append(population)
+        elif parameters is not None:
+            self._populations.append(Population(parameters=parameters,
+                                                initial_state=initial_state,
+                                                initialize_with_prejudice=initialize_with_prejudice,
+                                                save_history=save_history))
+        else:
+            raise ValueError('Either input a population or its parameters.')
+
+    def __getitem__(self, idx: int):
+        if isinstance(idx, int):
+            return self.populations()[idx]
+        else:
+            raise ValueError('Unknown input type.')
 
     def __call__(self, *args, **kwargs):
         if isinstance(args, int):
@@ -325,13 +351,20 @@ class Populations(OpinionDynamicsEntity):
     def populations(self):
         return self._populations
 
-    def initialize(self, initial_state: List[Opinion] or List[SamplerOpinion] or None = None,
-                   initialize_with_prejudice: bool = False) -> None:
+    def initialize(self,
+                   initial_state: List[Opinion] or List[SamplerOpinion] or None = None,
+                   initialize_with_prejudice: List[bool] or bool or None = None) -> None:
         if initial_state is None:
             initial_state = [None] * self.n_populations()
+        if initialize_with_prejudice is None:
+            initialize_with_prejudice = [None] * self.n_populations()
+        if isinstance(initialize_with_prejudice, bool):
+            initialize_with_prejudice = [initialize_with_prejudice] * self.n_populations()
+        assert len(initialize_with_prejudice) == self.n_populations(),'Check size of initialize_with_prejudice.'
+        assert len(initial_state) == self.n_populations(),'Check size of initial_state.'
         for i in range(self.n_populations()):
             self._populations[i].initialize(initial_state=initial_state[i],
-                                            initialize_with_prejudice=initialize_with_prejudice)
+                                            initialize_with_prejudice=initialize_with_prejudice[i])
 
     def update_state(self, recommendation: List[Recommendation]) -> List[Reward]:
         reward = []
@@ -364,20 +397,14 @@ class Populations(OpinionDynamicsEntity):
             return False
 
     def __add__(self, other):
-        par = [p.parameters for p in self.populations()]
-        ini = self.initial_state().copy()
         if isinstance(other, Population):
-            par.append(other.parameters())
-            ini.append(other.initial_state())
+            self.add_population(population=other)
         elif isinstance(other, Populations):
             for p in other.populations():
-                par.append(p.parameters)
-                ini.append(p.initial_state())
+                self.add_population(population=p)
         else:
             raise ValueError('Unknown input type.')
-        return Populations(initial_state=ini,
-                           parameters=par,
-                           save_history=self.save_history or other.save_history)
+        return self
 
     def plot(self, save: bool = False, show: bool = True, name: str = None, folder: str = None,
              intermediate: float = 0.5) -> tuple:

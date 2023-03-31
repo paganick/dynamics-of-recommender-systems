@@ -26,6 +26,7 @@ def plot_opinion_shift(axis: plt.axes,
     # axis.grid(visible=True)
     axis.scatter(x_start, x_end, 1, color=color)  # ideologies
     axis.plot([0, 1], [0, 1], 'r--', transform=axis.transAxes)  # identity
+    axis.axis('equal')
     # plt.xlabel('Initial Opinion')
     # plt.ylabel('Final Opinion')
     # add histograms
